@@ -1,3 +1,8 @@
+/* ================================================================
+   LIFEOPS - Stewardship Lane
+   Daily calibration, routines, logs, family leadership
+   ================================================================ */
+
 import { useState } from "react";
 import { useLogs, useCreateLog } from "@/hooks/use-bruce-ops";
 import { useForm } from "react-hook-form";
@@ -5,7 +10,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertLogSchema } from "@shared/schema";
 import { z } from "zod";
 import { format } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,18 +19,21 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, Lightbulb, Activity } from "lucide-react";
+import { CardWithBotanical } from "@/components/BotanicalMotifs";
 
 type LogFormValues = z.infer<typeof insertLogSchema>;
 
 export default function LifeOps() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+          <Activity className="w-6 h-6 text-green-400" />
+        </div>
         <div>
-          <h2 className="text-3xl font-display font-bold">LifeOps</h2>
-          <p className="text-muted-foreground">Calibrate your daily operating system.</p>
+          <h2 className="text-2xl font-display font-bold">LifeOps</h2>
+          <p className="text-sm text-muted-foreground tracking-wide">STEWARDSHIP CHANNEL // Daily calibration</p>
         </div>
       </div>
 
@@ -71,10 +78,11 @@ function DailyLogForm() {
   };
 
   return (
-    <Card className="border-border/50 shadow-xl max-w-3xl">
-      <CardHeader>
-        <CardTitle>Daily Calibration</CardTitle>
-      </CardHeader>
+    <CardWithBotanical className="max-w-3xl">
+      <Card className="border-border/30 bg-card/80 glow-hover">
+        <CardHeader>
+          <CardTitle className="text-lg">Daily Calibration</CardTitle>
+        </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           
@@ -202,7 +210,8 @@ function DailyLogForm() {
           </Button>
         </form>
       </CardContent>
-    </Card>
+      </Card>
+    </CardWithBotanical>
   );
 }
 

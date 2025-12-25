@@ -1,3 +1,8 @@
+/* ================================================================
+   THINKOPS - Ideas Lane
+   Invention, learning, experiments, reality-checking, building
+   ================================================================ */
+
 import { useState } from "react";
 import { useIdeas, useCreateIdea, useUpdateIdea, useRealityCheck } from "@/hooks/use-bruce-ops";
 import { useForm } from "react-hook-form";
@@ -5,7 +10,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertIdeaSchema } from "@shared/schema";
 import { z } from "zod";
 import { format } from "date-fns";
-import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,11 +17,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, ArrowRight, BrainCircuit, Rocket, Archive } from "lucide-react";
+import { Loader2, Plus, BrainCircuit, Rocket, Archive, Lightbulb } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { CardWithBotanical } from "@/components/BotanicalMotifs";
 
 type IdeaFormValues = z.infer<typeof insertIdeaSchema>;
 
@@ -27,9 +30,14 @@ export default function ThinkOps() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-display font-bold">ThinkOps</h2>
-          <p className="text-muted-foreground">From spark to shipment.</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+            <Lightbulb className="w-6 h-6 text-violet-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-display font-bold">ThinkOps</h2>
+            <p className="text-sm text-muted-foreground tracking-wide">IDEAS CHANNEL // From spark to shipment</p>
+          </div>
         </div>
         <Dialog>
           <DialogTrigger asChild>
@@ -152,9 +160,10 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {filteredIdeas.map((idea) => (
-        <Card key={idea.id} className="group border-border/50 hover:border-primary/50 transition-all duration-300">
+        <CardWithBotanical key={idea.id}>
+          <Card className="group border-border/30 bg-card/80 glow-hover transition-all duration-300">
           <CardHeader>
             <div className="flex justify-between items-start">
               <div className="space-y-1">
@@ -222,7 +231,8 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
               </Button>
             )}
           </CardFooter>
-        </Card>
+          </Card>
+        </CardWithBotanical>
       ))}
     </div>
   );

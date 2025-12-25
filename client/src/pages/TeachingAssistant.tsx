@@ -1,3 +1,8 @@
+/* ================================================================
+   TEACHING ASSISTANT - Work Lane
+   Curriculum, lesson plans, assessments
+   ================================================================ */
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTeachingRequestSchema } from "@shared/schema";
@@ -14,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, GraduationCap, FileText, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { CardWithBotanical } from "@/components/BotanicalMotifs";
 
 type TeachingFormValues = z.infer<typeof insertTeachingRequestSchema>;
 
@@ -38,11 +44,15 @@ export default function TeachingAssistant() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-8rem)]">
-      {/* Sidebar List */}
       <div className="lg:col-span-4 flex flex-col gap-4">
-        <div>
-          <h2 className="text-3xl font-display font-bold">Teaching Assistant</h2>
-          <p className="text-muted-foreground">Generate standards-aligned materials.</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <GraduationCap className="w-6 h-6 text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-display font-bold">Teaching Assistant</h2>
+            <p className="text-sm text-muted-foreground tracking-wide">WORK CHANNEL // Curriculum & lesson plans</p>
+          </div>
         </div>
         
         <Card className="flex-1 overflow-hidden border-border/50">

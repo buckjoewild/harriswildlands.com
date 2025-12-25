@@ -1,3 +1,8 @@
+/* ================================================================
+   HARRIS WILDLANDS - Build Lane
+   Website content, creative output, public work
+   ================================================================ */
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertHarrisContentSchema } from "@shared/schema";
@@ -8,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Trees, Sparkles, LayoutTemplate } from "lucide-react";
+import { CardWithBotanical } from "@/components/BotanicalMotifs";
 
 type HarrisFormValues = z.infer<typeof insertHarrisContentSchema>;
 
@@ -32,17 +37,18 @@ export default function HarrisWildlands() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="p-3 bg-green-950/30 rounded-xl border border-green-900/50">
-          <Trees className="w-8 h-8 text-green-500" />
+        <div className="w-12 h-12 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+          <Trees className="w-6 h-6 text-teal-400" />
         </div>
         <div>
-          <h2 className="text-3xl font-display font-bold">Harris Wildlands</h2>
-          <p className="text-muted-foreground">Brand voice and content generator.</p>
+          <h2 className="text-2xl font-display font-bold">Harris Wildlands</h2>
+          <p className="text-sm text-muted-foreground tracking-wide">BUILD CHANNEL // Brand voice & content</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="border-border/50">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CardWithBotanical>
+          <Card className="border-border/30 bg-card/80 glow-hover">
           <CardHeader>
             <CardTitle>Strategic Inputs</CardTitle>
             <CardDescription>Define the core message to guide the content.</CardDescription>
@@ -80,7 +86,7 @@ export default function HarrisWildlands() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={isPending}>
+              <Button type="submit" className="w-full" disabled={isPending}>
                 {isPending ? (
                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Copy...</>
                 ) : (
@@ -89,21 +95,21 @@ export default function HarrisWildlands() {
               </Button>
             </form>
           </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card className="h-full border-border/50 bg-secondary/5 border-dashed">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
-                Generated Content
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-               <p>Fill out the strategy form to generate content.</p>
-            </CardContent>
           </Card>
-        </div>
+        </CardWithBotanical>
+
+        <Card className="border-border/30 bg-card/50 border-dashed">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
+              Generated Content
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+            <Sparkles className="w-8 h-8 mb-3 opacity-30" />
+            <p className="text-sm">Fill out the strategy form to generate content.</p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
