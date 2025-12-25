@@ -8,10 +8,14 @@ import {
   Trees, 
   Menu, 
   X,
-  Settings
+  Settings,
+  LogOut,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 interface LayoutProps {
   children: ReactNode;
@@ -20,6 +24,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const { user, isLoading, isAuthenticated, logout } = useAuth();
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -46,6 +51,52 @@ export function Layout({ children }: LayoutProps) {
     );
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 mx-auto mb-4 animate-pulse">
+            <span className="font-display font-bold text-2xl text-white">B</span>
+          </div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated - show landing page
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="max-w-md text-center space-y-8">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl shadow-primary/30 mx-auto">
+            <span className="font-display font-bold text-4xl text-white">B</span>
+          </div>
+          <div>
+            <h1 className="font-display font-bold text-4xl tracking-tight mb-4">BruceOps</h1>
+            <p className="text-muted-foreground text-lg">
+              Your personal operating system for life, ideas, teaching, and content.
+            </p>
+          </div>
+          <Button 
+            size="lg" 
+            className="w-full max-w-xs shadow-lg"
+            onClick={() => window.location.href = "/api/login"}
+            data-testid="button-login"
+          >
+            <User className="w-5 h-5 mr-2" />
+            Sign in to Continue
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Sign in with Google, GitHub, or email via Replit
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Authenticated - show app
   return (
     <div className="min-h-screen bg-background text-foreground flex overflow-hidden">
       {/* Sidebar Desktop */}
@@ -63,8 +114,37 @@ export function Layout({ children }: LayoutProps) {
           ))}
         </nav>
 
-        <div className="pt-6 border-t border-border/50">
+        <div className="pt-6 border-t border-border/50 space-y-2">
            <NavLink href="/settings" label="Settings" icon={Settings} />
+        </div>
+
+        {/* User Profile Section */}
+        <div className="pt-4 mt-4 border-t border-border/50">
+          <div className="flex items-center gap-3 px-2">
+            <Avatar className="w-9 h-9">
+              <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || 'User'} />
+              <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                {user?.firstName?.[0] || user?.email?.[0] || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate" data-testid="text-username">
+                {user?.firstName || user?.email || 'User'}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.email}
+              </p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => logout()}
+              className="shrink-0"
+              data-testid="button-logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </aside>
 
@@ -76,9 +156,17 @@ export function Layout({ children }: LayoutProps) {
            </div>
            <span className="font-display font-bold text-xl">BruceOps</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!isSidebarOpen)}>
-          {isSidebarOpen ? <X /> : <Menu />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || 'User'} />
+            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+              {user?.firstName?.[0] || user?.email?.[0] || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!isSidebarOpen)}>
+            {isSidebarOpen ? <X /> : <Menu />}
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -92,6 +180,16 @@ export function Layout({ children }: LayoutProps) {
             ))}
              <div onClick={() => setSidebarOpen(false)} className="pt-4 mt-4 border-t border-border">
                 <NavLink href="/settings" label="Settings" icon={Settings} />
+             </div>
+             <div className="pt-4 mt-4 border-t border-border">
+               <Button 
+                 variant="ghost" 
+                 className="w-full justify-start text-muted-foreground"
+                 onClick={() => logout()}
+               >
+                 <LogOut className="w-5 h-5 mr-3" />
+                 Sign out
+               </Button>
              </div>
           </nav>
         </div>

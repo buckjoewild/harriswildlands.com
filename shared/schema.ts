@@ -2,11 +2,15 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Re-export auth models (required for Replit Auth)
+export * from "./models/auth";
+
 // === TABLE DEFINITIONS ===
 
 // Lane 1: LifeOps
 export const logs = pgTable("logs", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // User who owns this log
   date: text("date").notNull(), // YYYY-MM-DD
   sleepHours: integer("sleep_hours"),
   energy: integer("energy"), // 1-10
@@ -29,6 +33,7 @@ export const logs = pgTable("logs", {
 // Lane 2: ThinkOps
 export const ideas = pgTable("ideas", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // User who owns this idea
   title: text("title").notNull(),
   pitch: text("pitch"),
   whoItHelps: text("who_it_helps"),
@@ -44,6 +49,7 @@ export const ideas = pgTable("ideas", {
 // Lane 3: Bruce Teaching Assistant
 export const teachingRequests = pgTable("teaching_requests", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // User who owns this request
   grade: text("grade"),
   standard: text("standard"),
   topic: text("topic"),
@@ -60,6 +66,7 @@ export const teachingRequests = pgTable("teaching_requests", {
 // Lane 4: HarrisWildlands
 export const harrisContent = pgTable("harris_content", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // User who owns this content
   coreMessage: jsonb("core_message"), // { definition, audience, pain, promise }
   siteMap: jsonb("site_map"), // { homeGoal, startHereGoal, resourcesGoal, cta }
   leadMagnet: jsonb("lead_magnet"), // { title, problem, timeToValue, delivery }
@@ -76,10 +83,10 @@ export const settings = pgTable("settings", {
 
 // === SCHEMAS ===
 
-export const insertLogSchema = createInsertSchema(logs).omit({ id: true, createdAt: true, aiSummary: true });
-export const insertIdeaSchema = createInsertSchema(ideas).omit({ id: true, createdAt: true, realityCheck: true, promotedSpec: true });
-export const insertTeachingRequestSchema = createInsertSchema(teachingRequests).omit({ id: true, createdAt: true, output: true });
-export const insertHarrisContentSchema = createInsertSchema(harrisContent).omit({ id: true, createdAt: true, generatedCopy: true });
+export const insertLogSchema = createInsertSchema(logs).omit({ id: true, userId: true, createdAt: true, aiSummary: true });
+export const insertIdeaSchema = createInsertSchema(ideas).omit({ id: true, userId: true, createdAt: true, realityCheck: true, promotedSpec: true });
+export const insertTeachingRequestSchema = createInsertSchema(teachingRequests).omit({ id: true, userId: true, createdAt: true, output: true });
+export const insertHarrisContentSchema = createInsertSchema(harrisContent).omit({ id: true, userId: true, createdAt: true, generatedCopy: true });
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
 
 // === TYPES ===
