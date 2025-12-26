@@ -1,11 +1,30 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integrations/auth";
 
+// AI Provider Configuration
+const AI_PROVIDER = process.env.AI_PROVIDER || "off";
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const GOOGLE_GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY;
+
+// Determine active AI provider based on configuration and available keys
+function getActiveAIProvider(): "gemini" | "openrouter" | "off" {
+  if (AI_PROVIDER === "off") return "off";
+  if (AI_PROVIDER === "gemini" && GOOGLE_GEMINI_API_KEY) return "gemini";
+  if (AI_PROVIDER === "openrouter" && OPENROUTER_API_KEY) return "openrouter";
+  // Fallback ladder: try gemini first, then openrouter
+  if (GOOGLE_GEMINI_API_KEY) return "gemini";
+  if (OPENROUTER_API_KEY) return "openrouter";
+  return "off";
+}
+
+const activeProvider = getActiveAIProvider();
+console.log(`AI Provider: ${activeProvider} (configured: ${AI_PROVIDER})`);
 
 // Global developer prompt that addresses Bruce directly
 const BRUCE_CONTEXT = `You are speaking directly to Bruce Harris - a dad, 5th/6th grade teacher, creator, and builder.
@@ -18,41 +37,105 @@ function getUserId(req: Request): string {
   return (req.user as any)?.claims?.sub;
 }
 
-async function callOpenRouter(prompt: string, lanePrompt: string = "") {
-  if (!OPENROUTER_API_KEY) {
-    console.warn("OPENROUTER_API_KEY not set, returning mock response");
-    return "AI generation unavailable. Please set OPENROUTER_API_KEY.";
-  }
-
-  // Combine Bruce context with lane-specific instructions
-  const systemPrompt = `${BRUCE_CONTEXT}\n\n${lanePrompt}`.trim();
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+// Gemini API call
+async function callGemini(prompt: string, systemPrompt: string): Promise<string> {
+  if (!GOOGLE_GEMINI_API_KEY) throw new Error("Gemini API key not available");
+  
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+    {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
-        ],
+        contents: [{ parts: [{ text: `${systemPrompt}\n\n${prompt}` }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
       })
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-       console.error("OpenRouter API error:", data);
-       throw new Error(`OpenRouter API error: ${JSON.stringify(data)}`);
     }
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error("AI Call failed:", error);
-    return "Error generating AI response.";
+  );
+  
+  const data = await response.json();
+  if (!response.ok) throw new Error(`Gemini API error: ${JSON.stringify(data)}`);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
+
+// OpenRouter API call
+async function callOpenRouterAPI(prompt: string, systemPrompt: string): Promise<string> {
+  if (!OPENROUTER_API_KEY) throw new Error("OpenRouter API key not available");
+  
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ],
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(`OpenRouter API error: ${JSON.stringify(data)}`);
+  return data.choices[0].message.content;
+}
+
+// AI Provider Ladder: Gemini -> OpenRouter -> Off
+async function callAI(prompt: string, lanePrompt: string = ""): Promise<string> {
+  const systemPrompt = `${BRUCE_CONTEXT}\n\n${lanePrompt}`.trim();
+  const provider = getActiveAIProvider();
+  
+  if (provider === "off") {
+    return "AI features are currently disabled. Daily logging works normally.";
   }
+  
+  // Try primary provider
+  try {
+    if (provider === "gemini") {
+      return await callGemini(prompt, systemPrompt);
+    } else if (provider === "openrouter") {
+      return await callOpenRouterAPI(prompt, systemPrompt);
+    }
+  } catch (primaryError) {
+    console.error(`Primary AI provider (${provider}) failed:`, primaryError);
+    
+    // Fallback to secondary provider
+    try {
+      if (provider === "gemini" && OPENROUTER_API_KEY) {
+        console.log("Falling back to OpenRouter...");
+        return await callOpenRouterAPI(prompt, systemPrompt);
+      } else if (provider === "openrouter" && GOOGLE_GEMINI_API_KEY) {
+        console.log("Falling back to Gemini...");
+        return await callGemini(prompt, systemPrompt);
+      }
+    } catch (fallbackError) {
+      console.error("Fallback AI provider also failed:", fallbackError);
+    }
+  }
+  
+  return "AI insights unavailable. Daily logging completed successfully.";
+}
+
+// Check database connectivity
+async function checkDatabaseConnection(): Promise<"connected" | "error"> {
+  try {
+    await db.execute(sql`SELECT 1`);
+    return "connected";
+  } catch (error) {
+    console.error("Database connection check failed:", error);
+    return "error";
+  }
+}
+
+// Get AI status
+function getAIStatus(): "active" | "degraded" | "offline" {
+  const provider = getActiveAIProvider();
+  if (provider === "off") return "offline";
+  if (provider === "gemini" && GOOGLE_GEMINI_API_KEY) return "active";
+  if (provider === "openrouter" && OPENROUTER_API_KEY) return "active";
+  return "degraded";
 }
 
 export async function registerRoutes(
@@ -61,13 +144,17 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // ==================== HEALTH CHECK (NO AUTH) ====================
-  app.get("/api/health", (_req, res) => {
+  app.get("/api/health", async (_req, res) => {
+    const dbStatus = await checkDatabaseConnection();
     res.json({ 
-      status: "ok", 
+      status: dbStatus === "connected" ? "ok" : "degraded", 
       timestamp: new Date().toISOString(),
       version: "1.0.0",
       environment: process.env.NODE_ENV || "development",
-      aiEnabled: !!OPENROUTER_API_KEY
+      database: dbStatus,
+      demo_mode: false,
+      ai_provider: getActiveAIProvider(),
+      ai_status: getAIStatus()
     });
   });
 
@@ -151,7 +238,7 @@ export async function registerRoutes(
     const prompt = `Generate a factual summary for this daily log. Avoid advice. Identify pattern signals.
     Log Data: ${JSON.stringify(log)}`;
     
-    const summary = await callOpenRouter(prompt, "You are a Life Operations Steward. Output factual/pattern-based summaries only.");
+    const summary = await callAI(prompt, "You are a Life Operations Steward. Output factual/pattern-based summaries only.");
     
     const updated = await storage.updateLogSummary(userId, log.id, summary);
     res.json({ summary: updated.aiSummary });
@@ -202,7 +289,7 @@ export async function registerRoutes(
     
     Return pure JSON format: { "known": [], "likely": [], "speculation": [], "flags": [], "decision": "" }`;
 
-    const response = await callOpenRouter(prompt, "You are a ruthless but helpful product manager. JSON output only.");
+    const response = await callAI(prompt, "You are a ruthless but helpful product manager. JSON output only.");
     
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     const realityCheck = jsonMatch ? JSON.parse(jsonMatch[0]) : { error: "Failed to parse AI response", raw: response };
@@ -228,7 +315,7 @@ export async function registerRoutes(
       Build: (1) lesson outline, (2) hands-on activity, (3) exit ticket + key, (4) differentiation, (5) 10-min prep list.
       Return JSON format.`;
       
-      const response = await callOpenRouter(prompt, "You are a strict standards-aligned teaching assistant. JSON output only.");
+      const response = await callAI(prompt, "You are a strict standards-aligned teaching assistant. JSON output only.");
       
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       const output = jsonMatch ? JSON.parse(jsonMatch[0]) : { raw: response };
@@ -257,7 +344,7 @@ export async function registerRoutes(
       
       Output JSON with keys: home, startHere, resources. Keep it simple and honest.`;
       
-      const response = await callOpenRouter(prompt, "You are a copywriter for a dad/teacher audience. No hype. JSON output only.");
+      const response = await callAI(prompt, "You are a copywriter for a dad/teacher audience. No hype. JSON output only.");
       
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       const generatedCopy = jsonMatch ? JSON.parse(jsonMatch[0]) : { raw: response };
