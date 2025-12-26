@@ -55,7 +55,7 @@ export function HoverRevealImage({
         className={`
           absolute pointer-events-none
           ${positionClasses[imagePosition]}
-          ${imagePosition === "overlay" || imagePosition === "full" ? "w-full h-full" : sizeClasses[imageSize]}
+          ${imagePosition === "overlay" ? "w-full h-full" : sizeClasses[imageSize]}
           transition-all duration-500 ease-out
           ${isHovered ? "opacity-100 scale-100" : "opacity-0 scale-95"}
         `}
