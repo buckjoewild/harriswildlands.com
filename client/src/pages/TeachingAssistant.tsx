@@ -1,6 +1,7 @@
 /* ================================================================
    TEACHING ASSISTANT - Work Lane
    Curriculum, lesson plans, assessments
+   Visual: Knowledge tree constellation
    ================================================================ */
 
 import { useForm } from "react-hook-form";
@@ -20,15 +21,14 @@ import { Loader2, GraduationCap, FileText, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
-import { PageHeaderWithImage } from "@/components/HoverRevealImage";
-import teachingHeroImage from "@assets/generated_images/teachingassistant_knowledge_tree_constellation.png";
+import CoreImagery from "@/lib/coreImagery";
 
 type TeachingFormValues = z.infer<typeof insertTeachingRequestSchema>;
 
 export default function TeachingAssistant() {
   const { data: requests, isLoading } = useTeachingRequests();
   const { mutate: createRequest, isPending } = useCreateTeachingRequest();
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<(typeof requests)[number] | null>(null);
 
   const form = useForm<TeachingFormValues>({
     resolver: zodResolver(insertTeachingRequestSchema),
@@ -45,148 +45,175 @@ export default function TeachingAssistant() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-8rem)]">
-      <div className="lg:col-span-4 flex flex-col gap-4">
-        <PageHeaderWithImage src={teachingHeroImage} alt="Teaching Assistant botanical illustration">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-amber-400" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-display font-bold">Teaching Assistant</h2>
-              <p className="text-sm text-muted-foreground tracking-wide">WORK CHANNEL // Curriculum & lesson plans</p>
-            </div>
-          </div>
-        </PageHeaderWithImage>
+    <div className="space-y-6">
+      {/* Hero Header with Shared System Core Imagery (starfield map) */}
+      <div className="relative rounded-xl overflow-hidden mb-8">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url(${CoreImagery.sharedSystem})`,
+            backgroundPosition: "center 60%"
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         
-        <Card className="flex-1 overflow-hidden border-border/50">
-          <CardHeader>
-             <CardTitle className="text-lg">Recent Requests</CardTitle>
-          </CardHeader>
-          <ScrollArea className="h-[500px]">
-            <div className="p-4 space-y-3">
-              {isLoading && <Loader2 className="animate-spin mx-auto" />}
-              {requests?.map((req) => (
-                <div 
-                  key={req.id} 
-                  onClick={() => setSelectedRequest(req)}
-                  className="p-3 rounded-lg border border-border/30 hover:bg-secondary/30 cursor-pointer transition-colors group"
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="font-medium truncate pr-2">{req.topic}</span>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {format(new Date(req.createdAt!), "MMM d")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded">{req.grade}</span>
-                    <span>{req.standard}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </Card>
+        <div className="relative z-10 p-6 md:p-8 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center backdrop-blur-sm">
+            <GraduationCap className="w-7 h-7 text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl md:text-3xl font-display font-bold">Teaching Assistant</h2>
+            <p className="text-sm text-muted-foreground tracking-widest uppercase">
+              Work Channel // Curriculum & Lesson Plans
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="lg:col-span-8 space-y-6 overflow-y-auto pr-2">
-        {selectedRequest ? (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-             <Button variant="ghost" className="mb-4 pl-0 hover:pl-2 transition-all" onClick={() => setSelectedRequest(null)}>
-               <ChevronRight className="rotate-180 w-4 h-4 mr-2" /> Back to Form
-             </Button>
-             
-             <Card>
-               <CardHeader className="border-b border-border/50 bg-secondary/10">
-                 <div className="flex justify-between">
-                    <div>
-                      <CardTitle className="font-display text-2xl">{selectedRequest.topic}</CardTitle>
-                      <CardDescription>
-                        {selectedRequest.grade} • {selectedRequest.standard} • {selectedRequest.timeBlock}
-                      </CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => window.print()}>
-                      <FileText className="w-4 h-4 mr-2" /> Export PDF
-                    </Button>
-                 </div>
-               </CardHeader>
-               <CardContent className="p-6 prose prose-invert max-w-none">
-                 {/* Render JSONB output nicely */}
-                 <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                   {selectedRequest.output 
-                      ? JSON.stringify(selectedRequest.output, null, 2) 
-                      : "Generating..."}
-                 </pre>
-               </CardContent>
-             </Card>
-          </div>
-        ) : (
-          <Card className="border-border/50 shadow-xl bg-gradient-to-br from-card to-secondary/5">
-            <CardHeader>
-              <CardTitle>New Material Request</CardTitle>
-              <CardDescription>Bruce will analyze standards and create aligned content.</CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Sidebar - Recent Requests */}
+        <div className="lg:col-span-4">
+          <Card className="overflow-hidden border-border/30 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="border-b border-border/20">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                Recent Requests
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Grade Level</Label>
-                    <Input {...form.register("grade")} placeholder="e.g. 5th Grade" />
+            <ScrollArea className="h-[400px]">
+              <div className="p-4 space-y-3">
+                {isLoading && <Loader2 className="animate-spin mx-auto" />}
+                {!requests?.length && !isLoading && (
+                  <p className="text-sm text-muted-foreground text-center py-8">No requests yet</p>
+                )}
+                {requests?.map((req) => (
+                  <div 
+                    key={req.id} 
+                    onClick={() => setSelectedRequest(req)}
+                    className="p-3 rounded-lg border border-border/30 hover:border-amber-500/30 hover:bg-amber-500/5 cursor-pointer transition-colors group"
+                    data-testid={`card-request-${req.id}`}
+                  >
+                    <div className="flex justify-between items-start mb-1 gap-2">
+                      <span className="font-medium truncate">{req.topic}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {req.createdAt ? format(new Date(req.createdAt), "MMM d") : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded">{req.grade}</span>
+                      <span>{req.standard}</span>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Subject / Standard</Label>
-                    <Input {...form.register("standard")} placeholder="e.g. NGSS-5-PS1-1" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Topic</Label>
-                  <Input {...form.register("topic")} placeholder="e.g. Properties of Matter" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Time Block</Label>
-                    <Input {...form.register("timeBlock")} placeholder="e.g. 45 mins" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Format</Label>
-                    <Select onValueChange={(v) => form.setValue("format", v)} defaultValue="Lesson Plan">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select format" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Lesson Plan">Lesson Plan</SelectItem>
-                        <SelectItem value="Worksheet">Worksheet</SelectItem>
-                        <SelectItem value="Quiz">Quiz</SelectItem>
-                        <SelectItem value="Project">Project Guide</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Student Profile / Accommodations</Label>
-                  <Textarea {...form.register("studentProfile")} placeholder="Any specific needs?" />
-                </div>
-
-                <div className="space-y-2">
-                   <Label>Materials Available</Label>
-                   <Input {...form.register("materials")} placeholder="e.g. Paper, scissors, basic lab kit" />
-                </div>
-
-                <Button type="submit" className="w-full" size="lg" disabled={isPending}>
-                  {isPending ? (
-                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating Materials...</>
-                  ) : (
-                    <><GraduationCap className="mr-2 h-5 w-5" /> Generate with Bruce</>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
+                ))}
+              </div>
+            </ScrollArea>
           </Card>
-        )}
+        </div>
+
+        {/* Main Content Area */}
+        <div className="lg:col-span-8 space-y-6">
+          {selectedRequest ? (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+               <Button variant="ghost" className="mb-4 pl-0 hover:pl-2 transition-all" onClick={() => setSelectedRequest(null)} data-testid="button-back">
+                 <ChevronRight className="rotate-180 w-4 h-4 mr-2" /> Back to Form
+               </Button>
+               
+               <Card className="border-border/30 bg-card/80 backdrop-blur-sm">
+                 <CardHeader className="border-b border-border/20 bg-secondary/10">
+                   <div className="flex justify-between gap-4 flex-wrap">
+                      <div>
+                        <CardTitle className="font-display text-2xl">{selectedRequest.topic}</CardTitle>
+                        <CardDescription>
+                          {selectedRequest.grade} - {selectedRequest.standard} - {selectedRequest.timeBlock}
+                        </CardDescription>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => window.print()} data-testid="button-export">
+                        <FileText className="w-4 h-4 mr-2" /> Export PDF
+                      </Button>
+                   </div>
+                 </CardHeader>
+                 <CardContent className="p-6">
+                   <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed bg-secondary/20 p-4 rounded-lg">
+                     {selectedRequest.output 
+                        ? JSON.stringify(selectedRequest.output, null, 2) 
+                        : "Generating..."}
+                   </pre>
+                 </CardContent>
+               </Card>
+            </div>
+          ) : (
+            <CardWithBotanical>
+              <Card className="border-border/30 bg-card/80 backdrop-blur-sm shadow-xl">
+                <CardHeader className="border-b border-border/20">
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-amber-400" />
+                    New Material Request
+                  </CardTitle>
+                  <CardDescription>Bruce will analyze standards and create aligned content.</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Grade Level</Label>
+                        <Input {...form.register("grade")} placeholder="e.g. 5th Grade" data-testid="input-grade" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Subject / Standard</Label>
+                        <Input {...form.register("standard")} placeholder="e.g. NGSS-5-PS1-1" data-testid="input-standard" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Topic</Label>
+                      <Input {...form.register("topic")} placeholder="e.g. Properties of Matter" data-testid="input-topic" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Time Block</Label>
+                        <Input {...form.register("timeBlock")} placeholder="e.g. 45 mins" data-testid="input-time" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Format</Label>
+                        <Select onValueChange={(v) => form.setValue("format", v)} defaultValue="Lesson Plan">
+                          <SelectTrigger data-testid="select-format">
+                            <SelectValue placeholder="Select format" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Lesson Plan">Lesson Plan</SelectItem>
+                            <SelectItem value="Worksheet">Worksheet</SelectItem>
+                            <SelectItem value="Quiz">Quiz</SelectItem>
+                            <SelectItem value="Project">Project Guide</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Student Profile / Accommodations</Label>
+                      <Textarea {...form.register("studentProfile")} placeholder="Any specific needs?" data-testid="textarea-profile" />
+                    </div>
+
+                    <div className="space-y-2">
+                       <Label>Materials Available</Label>
+                       <Input {...form.register("materials")} placeholder="e.g. Paper, scissors, basic lab kit" data-testid="input-materials" />
+                    </div>
+
+                    <Button type="submit" className="w-full" size="lg" disabled={isPending} data-testid="button-generate">
+                      {isPending ? (
+                        <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating Materials...</>
+                      ) : (
+                        <><GraduationCap className="mr-2 h-5 w-5" /> Generate with Bruce</>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </CardWithBotanical>
+          )}
+        </div>
       </div>
     </div>
   );

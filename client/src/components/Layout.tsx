@@ -18,7 +18,8 @@ import {
   Grid3X3,
   Leaf,
   FlaskConical,
-  Church
+  Church,
+  Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -48,6 +49,7 @@ export function Layout({ children }: LayoutProps) {
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/life-ops", label: "LifeOps", icon: Activity },
     { href: "/think-ops", label: "ThinkOps", icon: Lightbulb },
+    { href: "/bruce-ops", label: "BruceOps", icon: Eye },
     { href: "/teaching", label: "Teaching", icon: GraduationCap },
     { href: "/harris", label: "Wildlands", icon: Trees },
   ];

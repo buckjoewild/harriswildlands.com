@@ -1,6 +1,7 @@
 /* ================================================================
    HARRIS WILDLANDS - Build Lane
    Website content, creative output, public work
+   Visual: Aurora forest with bioluminescent botanicals
    ================================================================ */
 
 import { useForm } from "react-hook-form";
@@ -15,8 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Trees, Sparkles, LayoutTemplate } from "lucide-react";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
-import { PageHeaderWithImage } from "@/components/HoverRevealImage";
-import wildlandsHeroImage from "@assets/generated_images/harriswildlands_bioluminescent_wild_botanicals.png";
+import CoreImagery from "@/lib/coreImagery";
 
 type HarrisFormValues = z.infer<typeof insertHarrisContentSchema>;
 
@@ -38,41 +38,57 @@ export default function HarrisWildlands() {
 
   return (
     <div className="space-y-6">
-      <PageHeaderWithImage src={wildlandsHeroImage} alt="Harris Wildlands botanical illustration">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-            <Trees className="w-6 h-6 text-teal-400" />
+      {/* Hero Header with HarrisWildlands Core Imagery */}
+      <div className="relative rounded-xl overflow-hidden mb-8">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url(${CoreImagery.harriswildlands})`,
+            backgroundPosition: "center 15%"
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        
+        <div className="relative z-10 p-6 md:p-8 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center backdrop-blur-sm">
+            <Trees className="w-7 h-7 text-teal-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-display font-bold">Harris Wildlands</h2>
-            <p className="text-sm text-muted-foreground tracking-wide">BUILD CHANNEL // Brand voice & content</p>
+            <h2 className="text-2xl md:text-3xl font-display font-bold">Harris Wildlands</h2>
+            <p className="text-sm text-muted-foreground tracking-widest uppercase">
+              Build Channel // Brand Voice & Content
+            </p>
           </div>
         </div>
-      </PageHeaderWithImage>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CardWithBotanical>
-          <Card className="border-border/30 bg-card/80 glow-hover">
-          <CardHeader>
-            <CardTitle>Strategic Inputs</CardTitle>
+          <Card className="border-border/30 bg-card/80 backdrop-blur-sm">
+          <CardHeader className="border-b border-border/20">
+            <CardTitle className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-teal-400" />
+              Strategic Inputs
+            </CardTitle>
             <CardDescription>Define the core message to guide the content.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Core Identity</h3>
                 <div className="space-y-2">
                   <Label>Audience</Label>
-                  <Input {...form.register("coreMessage.audience")} placeholder="Who is this for?" />
+                  <Input {...form.register("coreMessage.audience")} placeholder="Who is this for?" data-testid="input-audience" />
                 </div>
                 <div className="space-y-2">
                   <Label>Primary Pain</Label>
-                  <Input {...form.register("coreMessage.pain")} placeholder="What keeps them up at night?" />
+                  <Input {...form.register("coreMessage.pain")} placeholder="What keeps them up at night?" data-testid="input-pain" />
                 </div>
                  <div className="space-y-2">
                   <Label>The Promise</Label>
-                  <Textarea {...form.register("coreMessage.promise")} placeholder="What transformation do you offer?" />
+                  <Textarea {...form.register("coreMessage.promise")} placeholder="What transformation do you offer?" data-testid="textarea-promise" />
                 </div>
               </div>
 
@@ -81,16 +97,16 @@ export default function HarrisWildlands() {
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-2">
                     <Label>Home Goal</Label>
-                    <Input {...form.register("siteMap.homeGoal")} />
+                    <Input {...form.register("siteMap.homeGoal")} data-testid="input-home-goal" />
                   </div>
                   <div className="space-y-2">
                     <Label>CTA</Label>
-                    <Input {...form.register("siteMap.cta")} />
+                    <Input {...form.register("siteMap.cta")} data-testid="input-cta" />
                   </div>
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isPending}>
+              <Button type="submit" className="w-full" disabled={isPending} data-testid="button-generate">
                 {isPending ? (
                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Copy...</>
                 ) : (
@@ -102,7 +118,7 @@ export default function HarrisWildlands() {
           </Card>
         </CardWithBotanical>
 
-        <Card className="border-border/30 bg-card/50 border-dashed">
+        <Card className="border-border/30 bg-card/50 border-dashed backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <LayoutTemplate className="w-5 h-5 text-muted-foreground" />

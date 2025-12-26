@@ -1,6 +1,7 @@
 /* ================================================================
    LIFEOPS - Stewardship Lane
    Daily calibration, routines, logs, family leadership
+   Visual: Regeneration Field with bioluminescent fungi & aurora
    ================================================================ */
 
 import { useState } from "react";
@@ -21,30 +22,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Lightbulb, Activity } from "lucide-react";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
-import { PageHeaderWithImage } from "@/components/HoverRevealImage";
-import lifeOpsHeroImage from "@assets/generated_images/lifeops_botanical_neural_morning_glory.png";
+import CoreImagery from "@/lib/coreImagery";
 
 type LogFormValues = z.infer<typeof insertLogSchema>;
 
 export default function LifeOps() {
   return (
     <div className="space-y-6">
-      <PageHeaderWithImage src={lifeOpsHeroImage} alt="LifeOps botanical illustration">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-            <Activity className="w-6 h-6 text-green-400" />
+      {/* Hero Header with LifeOps Core Imagery */}
+      <div className="relative rounded-xl overflow-hidden mb-8">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url(${CoreImagery.lifeops})`,
+            backgroundPosition: "center 20%"
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        
+        <div className="relative z-10 p-6 md:p-8 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center backdrop-blur-sm">
+            <Activity className="w-7 h-7 text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-display font-bold">LifeOps</h2>
-            <p className="text-sm text-muted-foreground tracking-wide">STEWARDSHIP CHANNEL // Daily calibration</p>
+            <h2 className="text-2xl md:text-3xl font-display font-bold">LifeOps</h2>
+            <p className="text-sm text-muted-foreground tracking-widest uppercase">
+              Stewardship Channel // Daily Calibration
+            </p>
           </div>
         </div>
-      </PageHeaderWithImage>
+      </div>
 
       <Tabs defaultValue="log" className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-          <TabsTrigger value="log">Daily Log</TabsTrigger>
-          <TabsTrigger value="history">History & Insights</TabsTrigger>
+          <TabsTrigger value="log" data-testid="tab-daily-log">Daily Log</TabsTrigger>
+          <TabsTrigger value="history" data-testid="tab-history">History & Insights</TabsTrigger>
         </TabsList>
         
         <TabsContent value="log" className="mt-6">
@@ -83,11 +96,14 @@ function DailyLogForm() {
 
   return (
     <CardWithBotanical className="max-w-3xl">
-      <Card className="border-border/30 bg-card/80 glow-hover">
-        <CardHeader>
-          <CardTitle className="text-lg">Daily Calibration</CardTitle>
+      <Card className="border-border/30 bg-card/80 backdrop-blur-sm">
+        <CardHeader className="border-b border-border/20">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Daily Calibration
+          </CardTitle>
         </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           
           {/* Metrics Grid */}
@@ -96,13 +112,14 @@ function DailyLogForm() {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <Label>Energy Level</Label>
-                  <span className="text-sm font-mono text-primary">{form.watch("energy")}</span>
+                  <span className="text-sm font-mono text-emerald-400">{form.watch("energy")}</span>
                 </div>
                 <Slider 
                   min={1} max={10} step={1} 
                   value={[form.watch("energy") || 5]} 
                   onValueChange={([v]) => form.setValue("energy", v)}
                   className="py-2"
+                  data-testid="slider-energy"
                 />
               </div>
 
@@ -115,6 +132,7 @@ function DailyLogForm() {
                   min={1} max={10} step={1} 
                   value={[form.watch("stress") || 5]} 
                   onValueChange={([v]) => form.setValue("stress", v)}
+                  data-testid="slider-stress"
                 />
               </div>
 
@@ -127,6 +145,7 @@ function DailyLogForm() {
                   min={1} max={10} step={1} 
                   value={[form.watch("mood") || 5]} 
                   onValueChange={([v]) => form.setValue("mood", v)}
+                  data-testid="slider-mood"
                 />
               </div>
               
@@ -139,6 +158,7 @@ function DailyLogForm() {
                   min={1} max={10} step={1} 
                   value={[form.watch("moneyPressure") || 5]} 
                   onValueChange={([v]) => form.setValue("moneyPressure", v)}
+                  data-testid="slider-money"
                 />
               </div>
             </div>
@@ -152,6 +172,7 @@ function DailyLogForm() {
                 <Switch 
                   checked={form.watch("vaping") || false}
                   onCheckedChange={(c) => form.setValue("vaping", c)}
+                  data-testid="switch-vaping"
                 />
               </div>
 
@@ -163,6 +184,7 @@ function DailyLogForm() {
                 <Switch 
                   checked={form.watch("exercise") || false}
                   onCheckedChange={(c) => form.setValue("exercise", c)}
+                  data-testid="switch-exercise"
                 />
               </div>
             </div>
@@ -172,27 +194,27 @@ function DailyLogForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div className="space-y-2">
                  <Label>Top Win</Label>
-                 <Input {...form.register("topWin")} placeholder="What went well?" />
+                 <Input {...form.register("topWin")} placeholder="What went well?" data-testid="input-top-win" />
                </div>
                <div className="space-y-2">
                  <Label>Top Friction</Label>
-                 <Input {...form.register("topFriction")} placeholder="What was hard?" />
+                 <Input {...form.register("topFriction")} placeholder="What was hard?" data-testid="input-top-friction" />
                </div>
             </div>
 
             <div className="space-y-2">
               <Label>Tomorrow's Priority</Label>
-              <Input {...form.register("tomorrowPriority")} placeholder="One thing to crush tomorrow" />
+              <Input {...form.register("tomorrowPriority")} placeholder="One thing to crush tomorrow" data-testid="input-tomorrow" />
             </div>
 
             <div className="space-y-2">
               <Label>Family Connection</Label>
-              <Textarea {...form.register("familyConnection")} placeholder="Moments with family..." className="h-20" />
+              <Textarea {...form.register("familyConnection")} placeholder="Moments with family..." className="h-20" data-testid="textarea-family" />
             </div>
 
             <div className="space-y-2">
               <Label>Faith Alignment</Label>
-              <Textarea {...form.register("faithAlignment")} placeholder="Spiritual check-in..." className="h-20" />
+              <Textarea {...form.register("faithAlignment")} placeholder="Spiritual check-in..." className="h-20" data-testid="textarea-faith" />
             </div>
 
              <div className="space-y-2">
@@ -201,11 +223,12 @@ function DailyLogForm() {
                 {...form.register("driftCheck")} 
                 placeholder="Where are you drifting off course?" 
                 className="h-20 border-destructive/20 focus-visible:ring-destructive/50" 
+                data-testid="textarea-drift"
               />
             </div>
           </div>
 
-          <Button type="submit" className="w-full md:w-auto" disabled={isPending}>
+          <Button type="submit" className="w-full md:w-auto" disabled={isPending} data-testid="button-save-log">
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
@@ -224,17 +247,25 @@ function LogHistory() {
 
   if (isLoading) return <div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>;
 
+  if (!logs?.length) {
+    return (
+      <div className="text-center py-20 border border-dashed border-border rounded-xl">
+        <p className="text-muted-foreground">No logs yet. Start your daily calibration above.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {logs?.map((log) => (
-        <Card key={log.id} className="overflow-hidden border-border/40 hover:border-border transition-all">
+        <Card key={log.id} className="overflow-hidden border-border/40 hover:border-emerald-500/30 transition-all backdrop-blur-sm" data-testid={`card-log-${log.id}`}>
           <div className="flex flex-col md:flex-row">
             <div className="p-6 md:w-64 bg-secondary/30 border-b md:border-b-0 md:border-r border-border/40 flex flex-col justify-center space-y-4">
               <div className="text-2xl font-display font-bold">{format(new Date(log.date), "MMM d, yyyy")}</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex flex-col">
                    <span className="text-muted-foreground text-xs uppercase">Energy</span>
-                   <span className="font-mono font-bold">{log.energy}/10</span>
+                   <span className="font-mono font-bold text-emerald-400">{log.energy}/10</span>
                 </div>
                 <div className="flex flex-col">
                    <span className="text-muted-foreground text-xs uppercase">Stress</span>

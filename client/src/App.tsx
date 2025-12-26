@@ -11,6 +11,7 @@ import LifeOps from "@/pages/LifeOps";
 import ThinkOps from "@/pages/ThinkOps";
 import TeachingAssistant from "@/pages/TeachingAssistant";
 import HarrisWildlands from "@/pages/HarrisWildlands";
+import BruceOps from "@/pages/BruceOps";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/think-ops" component={ThinkOps} />
         <Route path="/teaching" component={TeachingAssistant} />
         <Route path="/harris" component={HarrisWildlands} />
+        <Route path="/bruce-ops" component={BruceOps} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

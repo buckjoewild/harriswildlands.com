@@ -1,6 +1,7 @@
 /* ================================================================
    THINKOPS - Ideas Lane
    Invention, learning, experiments, reality-checking, building
+   Visual: Neural constellation with mind map tree
    ================================================================ */
 
 import { useState } from "react";
@@ -15,14 +16,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, Plus, BrainCircuit, Rocket, Archive, Lightbulb } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
-import { PageHeaderWithImage } from "@/components/HoverRevealImage";
-import thinkOpsHeroImage from "@assets/generated_images/thinkops_idea_seedlings_circuit_leaves.png";
+import CoreImagery from "@/lib/coreImagery";
 
 type IdeaFormValues = z.infer<typeof insertIdeaSchema>;
 
@@ -31,38 +31,52 @@ export default function ThinkOps() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <PageHeaderWithImage src={thinkOpsHeroImage} alt="ThinkOps botanical illustration">
+      {/* Hero Header with ThinkOps Core Imagery */}
+      <div className="relative rounded-xl overflow-hidden mb-8">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url(${CoreImagery.thinkops})`,
+            backgroundPosition: "center 15%"
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        
+        <div className="relative z-10 p-6 md:p-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-              <Lightbulb className="w-6 h-6 text-violet-400" />
+            <div className="w-14 h-14 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center backdrop-blur-sm">
+              <Lightbulb className="w-7 h-7 text-violet-400" />
             </div>
             <div>
-              <h2 className="text-2xl font-display font-bold">ThinkOps</h2>
-              <p className="text-sm text-muted-foreground tracking-wide">IDEAS CHANNEL // From spark to shipment</p>
+              <h2 className="text-2xl md:text-3xl font-display font-bold">ThinkOps</h2>
+              <p className="text-sm text-muted-foreground tracking-widest uppercase">
+                Ideas Channel // From Spark to Shipment
+              </p>
             </div>
           </div>
-        </PageHeaderWithImage>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="gap-2 shadow-lg shadow-primary/25">
-              <Plus className="w-4 h-4" /> New Idea
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-xl">
-            <DialogHeader>
-              <DialogTitle>Capture Spark</DialogTitle>
-            </DialogHeader>
-            <CaptureIdeaForm onSuccess={() => setActiveTab("reality")} />
-          </DialogContent>
-        </Dialog>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="gap-2 shadow-lg shadow-violet-500/25" data-testid="button-new-idea">
+                <Plus className="w-4 h-4" /> New Idea
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Capture Spark</DialogTitle>
+              </DialogHeader>
+              <CaptureIdeaForm onSuccess={() => setActiveTab("reality")} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
-          <TabsTrigger value="capture">Inbox</TabsTrigger>
-          <TabsTrigger value="reality">Reality Check</TabsTrigger>
-          <TabsTrigger value="build">Build & Ship</TabsTrigger>
+          <TabsTrigger value="capture" data-testid="tab-inbox">Inbox</TabsTrigger>
+          <TabsTrigger value="reality" data-testid="tab-reality">Reality Check</TabsTrigger>
+          <TabsTrigger value="build" data-testid="tab-build">Build & Ship</TabsTrigger>
         </TabsList>
         
         <TabsContent value="capture" className="mt-6">
@@ -104,36 +118,36 @@ function CaptureIdeaForm({ onSuccess }: { onSuccess?: () => void }) {
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
       <div className="space-y-2">
         <Label>Concept Name</Label>
-        <Input {...form.register("title")} placeholder="e.g. The Super App" />
+        <Input {...form.register("title")} placeholder="e.g. The Super App" data-testid="input-idea-title" />
       </div>
 
       <div className="space-y-2">
         <Label>The Pitch (One sentence)</Label>
-        <Input {...form.register("pitch")} placeholder="It's like X but for Y..." />
+        <Input {...form.register("pitch")} placeholder="It's like X but for Y..." data-testid="input-idea-pitch" />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Who is it for?</Label>
-          <Input {...form.register("whoItHelps")} />
+          <Input {...form.register("whoItHelps")} data-testid="input-who-helps" />
         </div>
         <div className="space-y-2">
           <Label>Pain it solves?</Label>
-          <Input {...form.register("painItSolves")} />
+          <Input {...form.register("painItSolves")} data-testid="input-pain-solves" />
         </div>
       </div>
 
       <div className="space-y-2">
         <Label>Why I care?</Label>
-        <Textarea {...form.register("whyICare")} placeholder="Personal motivation..." />
+        <Textarea {...form.register("whyICare")} placeholder="Personal motivation..." data-testid="textarea-why-care" />
       </div>
 
       <div className="space-y-2">
-        <Label>Tiny Test (≤ 7 days)</Label>
-        <Input {...form.register("tinyTest")} placeholder="How can I validate this quickly?" />
+        <Label>Tiny Test (7 days or less)</Label>
+        <Input {...form.register("tinyTest")} placeholder="How can I validate this quickly?" data-testid="input-tiny-test" />
       </div>
 
-      <Button type="submit" className="w-full mt-4" disabled={isPending}>
+      <Button type="submit" className="w-full mt-4" disabled={isPending} data-testid="button-capture-idea">
         {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
         Capture Idea
       </Button>
@@ -150,7 +164,7 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
 
   const filteredIdeas = ideas?.filter(idea => {
     if (filter === "draft") return idea.status === "draft";
-    if (filter === "reality") return idea.status === "draft" || idea.status === "parked"; // Show drafts here too for processing
+    if (filter === "reality") return idea.status === "draft" || idea.status === "parked";
     if (filter === "promoted") return idea.status === "promoted" || idea.status === "shipped";
     return false;
   });
@@ -167,15 +181,15 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {filteredIdeas.map((idea) => (
         <CardWithBotanical key={idea.id}>
-          <Card className="group border-border/30 bg-card/80 glow-hover transition-all duration-300">
+          <Card className="group border-border/30 bg-card/80 backdrop-blur-sm hover:border-violet-500/30 transition-all duration-300" data-testid={`card-idea-${idea.id}`}>
           <CardHeader>
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <CardTitle className="font-display">{idea.title}</CardTitle>
+            <div className="flex justify-between items-start gap-2">
+              <div className="space-y-1 min-w-0">
+                <CardTitle className="font-display truncate">{idea.title}</CardTitle>
                 <StatusBadge status={idea.status || 'draft'} />
               </div>
-              <span className="text-xs text-muted-foreground font-mono">
-                {format(new Date(idea.createdAt), "MMM d")}
+              <span className="text-xs text-muted-foreground font-mono shrink-0">
+                {idea.createdAt ? format(new Date(idea.createdAt), "MMM d") : ""}
               </span>
             </div>
           </CardHeader>
@@ -183,25 +197,25 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
             <p className="text-sm text-muted-foreground line-clamp-2">{idea.pitch}</p>
             
             {filter === "reality" && idea.realityCheck && (
-              <div className="p-3 bg-secondary/30 rounded-lg text-xs space-y-2">
-                <div className="font-semibold text-accent flex items-center gap-2">
+              <div className="p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg text-xs space-y-2">
+                <div className="font-semibold text-violet-400 flex items-center gap-2">
                    <BrainCircuit className="w-3 h-3" /> AI Analysis
                 </div>
-                {/* Safe access to JSONB field */}
                 <p className="line-clamp-3 italic opacity-80">
-                  {(idea.realityCheck as any).decision || "Analysis pending..."}
+                  {String((idea.realityCheck as Record<string, unknown>)?.decision || "Analysis pending...")}
                 </p>
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex justify-between border-t border-border/30 pt-4">
+          <CardFooter className="flex justify-between gap-2 border-t border-border/30 pt-4">
             {filter === "draft" && (
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors"
+                className="w-full group-hover:bg-violet-500 group-hover:text-white group-hover:border-violet-500 transition-colors"
                 onClick={() => runCheck(idea.id)}
                 disabled={isChecking}
+                data-testid={`button-reality-check-${idea.id}`}
               >
                 {isChecking ? <Loader2 className="w-3 h-3 animate-spin mr-2"/> : <BrainCircuit className="w-3 h-3 mr-2"/>}
                 Run Reality Check
@@ -213,8 +227,9 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
                 <Button 
                    variant="secondary" 
                    size="sm" 
-                   className="flex-1 hover:text-destructive hover:bg-destructive/10"
+                   className="flex-1"
                    onClick={() => updateIdea({ id: idea.id, status: "discarded" })}
+                   data-testid={`button-discard-${idea.id}`}
                 >
                   <Archive className="w-3 h-3 mr-2" /> Discard
                 </Button>
@@ -223,6 +238,7 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
                    size="sm" 
                    className="flex-1"
                    onClick={() => updateIdea({ id: idea.id, status: "promoted" })}
+                   data-testid={`button-promote-${idea.id}`}
                 >
                   <Rocket className="w-3 h-3 mr-2" /> Promote
                 </Button>
@@ -230,7 +246,7 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
             )}
 
              {filter === "promoted" && (
-              <Button variant="outline" size="sm" className="w-full">
+              <Button variant="outline" size="sm" className="w-full" data-testid={`button-view-specs-${idea.id}`}>
                 View Specs & Build
               </Button>
             )}
