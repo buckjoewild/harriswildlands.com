@@ -7,16 +7,25 @@ import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integra
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
+// Global developer prompt that addresses Bruce directly
+const BRUCE_CONTEXT = `You are speaking directly to Bruce Harris - a dad, 5th/6th grade teacher, creator, and builder.
+Bruce is building his personal operating system called BruceOps to manage his life, ideas, teaching, and creative work.
+Always address him as "Bruce" and speak with the directness of a trusted advisor who knows his goals.
+Be practical, honest, and help him stay aligned with his values: faith, family, building things that matter.`;
+
 // Helper to get userId from authenticated request
 function getUserId(req: Request): string {
   return (req.user as any)?.claims?.sub;
 }
 
-async function callOpenRouter(prompt: string, systemPrompt: string = "You are a helpful assistant.") {
+async function callOpenRouter(prompt: string, lanePrompt: string = "") {
   if (!OPENROUTER_API_KEY) {
     console.warn("OPENROUTER_API_KEY not set, returning mock response");
     return "AI generation unavailable. Please set OPENROUTER_API_KEY.";
   }
+
+  // Combine Bruce context with lane-specific instructions
+  const systemPrompt = `${BRUCE_CONTEXT}\n\n${lanePrompt}`.trim();
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
