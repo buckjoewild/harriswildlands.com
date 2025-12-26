@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type InsertLog, type InsertIdea, type InsertTeachingRequest, type InsertHarrisContent } from "@shared/routes";
+import { api, buildUrl } from "@shared/routes";
+import type { InsertLog, InsertIdea, InsertTeachingRequest, InsertHarrisContent } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { isDemoMode } from "@/hooks/use-auth";
+import { demoLogs, demoIdeas, demoContent } from "@/hooks/use-demo";
 
 // ==========================================
 // DASHBOARD
@@ -9,6 +12,9 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: [api.dashboard.get.path],
     queryFn: async () => {
+      if (isDemoMode()) {
+        return { logsToday: 1, openLoops: 2, driftFlags: 0, aiCalls: 5 };
+      }
       const res = await fetch(api.dashboard.get.path);
       if (!res.ok) throw new Error("Failed to fetch dashboard stats");
       return api.dashboard.get.responses[200].parse(await res.json());
@@ -23,6 +29,9 @@ export function useLogs() {
   return useQuery({
     queryKey: [api.logs.list.path],
     queryFn: async () => {
+      if (isDemoMode()) {
+        return demoLogs as any;
+      }
       const res = await fetch(api.logs.list.path);
       if (!res.ok) throw new Error("Failed to fetch logs");
       return api.logs.list.responses[200].parse(await res.json());
@@ -36,7 +45,9 @@ export function useCreateLog() {
   
   return useMutation({
     mutationFn: async (data: InsertLog) => {
-      // Coerce numeric/boolean fields properly if coming from raw form inputs
+      if (isDemoMode()) {
+        return { id: Date.now(), ...data, createdAt: new Date().toISOString() } as any;
+      }
       const res = await fetch(api.logs.create.path, {
         method: api.logs.create.method,
         headers: { 'Content-Type': 'application/json' },
@@ -48,7 +59,7 @@ export function useCreateLog() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.logs.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
-      toast({ title: "Log Saved", description: "Your daily log has been recorded." });
+      toast({ title: isDemoMode() ? "Demo: Log Saved" : "Log Saved", description: "Your daily log has been recorded." });
     },
     onError: (err) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -63,6 +74,9 @@ export function useIdeas() {
   return useQuery({
     queryKey: [api.ideas.list.path],
     queryFn: async () => {
+      if (isDemoMode()) {
+        return demoIdeas as any;
+      }
       const res = await fetch(api.ideas.list.path);
       if (!res.ok) throw new Error("Failed to fetch ideas");
       return api.ideas.list.responses[200].parse(await res.json());
@@ -76,6 +90,9 @@ export function useCreateIdea() {
 
   return useMutation({
     mutationFn: async (data: InsertIdea) => {
+      if (isDemoMode()) {
+        return { id: Date.now(), ...data, createdAt: new Date().toISOString() } as any;
+      }
       const res = await fetch(api.ideas.create.path, {
         method: api.ideas.create.method,
         headers: { 'Content-Type': 'application/json' },
@@ -87,7 +104,7 @@ export function useCreateIdea() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.ideas.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
-      toast({ title: "Idea Captured", description: "Added to your ThinkOps inbox." });
+      toast({ title: isDemoMode() ? "Demo: Idea Captured" : "Idea Captured", description: "Added to your ThinkOps inbox." });
     },
     onError: (err) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
