@@ -21,21 +21,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Lightbulb, Activity } from "lucide-react";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
+import { PageHeaderWithImage } from "@/components/HoverRevealImage";
+import lifeOpsHeroImage from "@assets/generated_images/lifeops_botanical_neural_morning_glory.png";
 
 type LogFormValues = z.infer<typeof insertLogSchema>;
 
 export default function LifeOps() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-          <Activity className="w-6 h-6 text-green-400" />
+      <PageHeaderWithImage src={lifeOpsHeroImage} alt="LifeOps botanical illustration">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+            <Activity className="w-6 h-6 text-green-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-display font-bold">LifeOps</h2>
+            <p className="text-sm text-muted-foreground tracking-wide">STEWARDSHIP CHANNEL // Daily calibration</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-display font-bold">LifeOps</h2>
-          <p className="text-sm text-muted-foreground tracking-wide">STEWARDSHIP CHANNEL // Daily calibration</p>
-        </div>
-      </div>
+      </PageHeaderWithImage>
 
       <Tabs defaultValue="log" className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">

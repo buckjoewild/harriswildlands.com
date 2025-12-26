@@ -9,6 +9,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Lightbulb, Trees, AlertTriangle, Sparkles, Heart, Shield, Eye, Zap } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CardWithBotanical, RootNetwork } from "@/components/BotanicalMotifs";
+import { CardHoverImage } from "@/components/HoverRevealImage";
+import lifeOpsImage from "@assets/generated_images/lifeops_botanical_neural_morning_glory.png";
+import thinkOpsImage from "@assets/generated_images/thinkops_idea_seedlings_circuit_leaves.png";
+import wildlandsImage from "@assets/generated_images/harriswildlands_bioluminescent_wild_botanicals.png";
 
 export default function Dashboard() {
   const { data: stats, isLoading } = useDashboardStats();
@@ -32,7 +36,8 @@ export default function Dashboard() {
       description: "Daily calibration, family leadership, consistency tracking",
       icon: Activity,
       color: "from-green-500/20 to-emerald-600/10",
-      iconColor: "text-green-400"
+      iconColor: "text-green-400",
+      image: lifeOpsImage
     },
     {
       href: "/think-ops",
@@ -41,7 +46,8 @@ export default function Dashboard() {
       description: "Invention, learning, experiments, reality-checking",
       icon: Lightbulb,
       color: "from-violet-500/20 to-purple-600/10",
-      iconColor: "text-violet-400"
+      iconColor: "text-violet-400",
+      image: thinkOpsImage
     },
     {
       href: "/harris",
@@ -50,7 +56,8 @@ export default function Dashboard() {
       description: "Website content, creative output, public work",
       icon: Trees,
       color: "from-teal-500/20 to-cyan-600/10", 
-      iconColor: "text-teal-400"
+      iconColor: "text-teal-400",
+      image: wildlandsImage
     }
   ];
 
@@ -82,23 +89,25 @@ export default function Dashboard() {
         {doors.map((door) => (
           <Link key={door.href} href={door.href}>
             <CardWithBotanical className="h-full">
-              <Card className={`h-full border-border/30 bg-gradient-to-br ${door.color} glow-hover cursor-pointer transition-all duration-300 hover:scale-[1.02]`}>
-                <CardContent className="p-6 flex flex-col h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-card/80 border border-border/30 flex items-center justify-center">
-                      <door.icon className={`w-5 h-5 ${door.iconColor}`} />
+              <CardHoverImage src={door.image} alt={door.title}>
+                <Card className={`h-full border-border/30 bg-gradient-to-br ${door.color} glow-hover cursor-pointer transition-all duration-300 hover:scale-[1.02]`}>
+                  <CardContent className="p-6 flex flex-col h-full">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-lg bg-card/80 border border-border/30 flex items-center justify-center">
+                        <door.icon className={`w-5 h-5 ${door.iconColor}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-display font-bold text-lg leading-none">{door.title}</h3>
+                        <p className="text-[10px] text-muted-foreground tracking-widest uppercase">{door.subtitle}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-display font-bold text-lg leading-none">{door.title}</h3>
-                      <p className="text-[10px] text-muted-foreground tracking-widest uppercase">{door.subtitle}</p>
+                    <p className="text-sm text-muted-foreground flex-1">{door.description}</p>
+                    <div className="mt-4 text-xs text-primary tracking-wide">
+                      ENTER CHANNEL
                     </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground flex-1">{door.description}</p>
-                  <div className="mt-4 text-xs text-primary tracking-wide">
-                    ENTER CHANNEL
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </CardHoverImage>
             </CardWithBotanical>
           </Link>
         ))}

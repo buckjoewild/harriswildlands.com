@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Trees, Sparkles, LayoutTemplate } from "lucide-react";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
+import { PageHeaderWithImage } from "@/components/HoverRevealImage";
+import wildlandsHeroImage from "@assets/generated_images/harriswildlands_bioluminescent_wild_botanicals.png";
 
 type HarrisFormValues = z.infer<typeof insertHarrisContentSchema>;
 
@@ -36,15 +38,17 @@ export default function HarrisWildlands() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-          <Trees className="w-6 h-6 text-teal-400" />
+      <PageHeaderWithImage src={wildlandsHeroImage} alt="Harris Wildlands botanical illustration">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+            <Trees className="w-6 h-6 text-teal-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-display font-bold">Harris Wildlands</h2>
+            <p className="text-sm text-muted-foreground tracking-wide">BUILD CHANNEL // Brand voice & content</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-display font-bold">Harris Wildlands</h2>
-          <p className="text-sm text-muted-foreground tracking-wide">BUILD CHANNEL // Brand voice & content</p>
-        </div>
-      </div>
+      </PageHeaderWithImage>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CardWithBotanical>

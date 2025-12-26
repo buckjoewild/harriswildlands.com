@@ -20,6 +20,8 @@ import { Loader2, GraduationCap, FileText, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
+import { PageHeaderWithImage } from "@/components/HoverRevealImage";
+import teachingHeroImage from "@assets/generated_images/teachingassistant_knowledge_tree_constellation.png";
 
 type TeachingFormValues = z.infer<typeof insertTeachingRequestSchema>;
 
@@ -45,15 +47,17 @@ export default function TeachingAssistant() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-8rem)]">
       <div className="lg:col-span-4 flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-            <GraduationCap className="w-6 h-6 text-amber-400" />
+        <PageHeaderWithImage src={teachingHeroImage} alt="Teaching Assistant botanical illustration">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+              <GraduationCap className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-display font-bold">Teaching Assistant</h2>
+              <p className="text-sm text-muted-foreground tracking-wide">WORK CHANNEL // Curriculum & lesson plans</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-display font-bold">Teaching Assistant</h2>
-            <p className="text-sm text-muted-foreground tracking-wide">WORK CHANNEL // Curriculum & lesson plans</p>
-          </div>
-        </div>
+        </PageHeaderWithImage>
         
         <Card className="flex-1 overflow-hidden border-border/50">
           <CardHeader>

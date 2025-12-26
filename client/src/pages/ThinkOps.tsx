@@ -21,6 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Loader2, Plus, BrainCircuit, Rocket, Archive, Lightbulb } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
+import { PageHeaderWithImage } from "@/components/HoverRevealImage";
+import thinkOpsHeroImage from "@assets/generated_images/thinkops_idea_seedlings_circuit_leaves.png";
 
 type IdeaFormValues = z.infer<typeof insertIdeaSchema>;
 
@@ -30,15 +32,17 @@ export default function ThinkOps() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-            <Lightbulb className="w-6 h-6 text-violet-400" />
+        <PageHeaderWithImage src={thinkOpsHeroImage} alt="ThinkOps botanical illustration">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+              <Lightbulb className="w-6 h-6 text-violet-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-display font-bold">ThinkOps</h2>
+              <p className="text-sm text-muted-foreground tracking-wide">IDEAS CHANNEL // From spark to shipment</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-display font-bold">ThinkOps</h2>
-            <p className="text-sm text-muted-foreground tracking-wide">IDEAS CHANNEL // From spark to shipment</p>
-          </div>
-        </div>
+        </PageHeaderWithImage>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="gap-2 shadow-lg shadow-primary/25">
