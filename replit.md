@@ -63,9 +63,14 @@ Preferred communication style: Simple, everyday language.
 
 ## External Dependencies
 
-### AI Services
-- **OpenRouter API**: Primary LLM gateway (requires `OPENROUTER_API_KEY` environment variable)
-- Default model: `openai/gpt-4o-mini`
+### AI Services (Provider Ladder)
+AI providers are tried in this order with automatic fallback:
+1. **Gemini** (Google AI Studio free tier) - requires `GOOGLE_GEMINI_API_KEY`
+2. **OpenRouter** (paid, multiple models) - requires `OPENROUTER_API_KEY`
+3. **Off** - graceful degradation, app works without AI
+
+Configuration via `AI_PROVIDER` env var: `gemini` | `openrouter` | `off`
+Default model: `openai/gpt-4o-mini` (OpenRouter) or `gemini-1.5-flash` (Gemini)
 
 ### Database
 - **PostgreSQL**: Primary data store (requires `DATABASE_URL` environment variable)
