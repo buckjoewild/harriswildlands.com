@@ -88,6 +88,16 @@ The app supports standalone operation outside Replit:
 - **Data Export**: `/api/export/data` downloads all user data as JSON
 - **Graceful Auth Fallback**: Non-Replit environments use memory sessions with demo mode
 
+### Google Drive Integration
+- **Connector**: Replit Google Drive connector (automatic OAuth handling)
+- **Client File**: `server/google-drive.ts`
+- **API Endpoints**:
+  - `GET /api/drive/files` - List files (optional `?q=` query)
+  - `POST /api/drive/upload` - Upload file (name, content, mimeType)
+  - `GET /api/drive/download/:fileId` - Download file content
+  - `POST /api/drive/folder` - Create folder
+- **Permissions**: Full Drive access for app data, files, docs, sheets
+
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit`: Database ORM and migrations
 - `@tanstack/react-query`: Server state management
@@ -95,3 +105,4 @@ The app supports standalone operation outside Replit:
 - `wouter`: Client-side routing
 - `express-session` + `connect-pg-simple`: Session management
 - `passport` + `openid-client`: Authentication flow
+- `googleapis`: Google Drive API client

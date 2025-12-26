@@ -521,5 +521,64 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
     res.json(exportData);
   });
 
+  // ==================== GOOGLE DRIVE ====================
+  
+  // List files from Google Drive
+  app.get("/api/drive/files", isAuthenticated, async (req, res) => {
+    try {
+      const { listDriveFiles } = await import("./google-drive");
+      const query = req.query.q as string | undefined;
+      const files = await listDriveFiles(query);
+      res.json({ files });
+    } catch (error: any) {
+      console.error("Google Drive list error:", error);
+      res.status(500).json({ error: error.message || "Failed to list files" });
+    }
+  });
+
+  // Upload file to Google Drive
+  app.post("/api/drive/upload", isAuthenticated, async (req, res) => {
+    try {
+      const { uploadToDrive } = await import("./google-drive");
+      const { name, content, mimeType } = req.body;
+      if (!name || !content) {
+        return res.status(400).json({ error: "Name and content are required" });
+      }
+      const file = await uploadToDrive(name, content, mimeType);
+      res.json({ file });
+    } catch (error: any) {
+      console.error("Google Drive upload error:", error);
+      res.status(500).json({ error: error.message || "Failed to upload file" });
+    }
+  });
+
+  // Download file from Google Drive
+  app.get("/api/drive/download/:fileId", isAuthenticated, async (req, res) => {
+    try {
+      const { downloadFromDrive } = await import("./google-drive");
+      const content = await downloadFromDrive(req.params.fileId);
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Google Drive download error:", error);
+      res.status(500).json({ error: error.message || "Failed to download file" });
+    }
+  });
+
+  // Create folder in Google Drive
+  app.post("/api/drive/folder", isAuthenticated, async (req, res) => {
+    try {
+      const { createDriveFolder } = await import("./google-drive");
+      const { name } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: "Folder name is required" });
+      }
+      const folder = await createDriveFolder(name);
+      res.json({ folder });
+    } catch (error: any) {
+      console.error("Google Drive folder error:", error);
+      res.status(500).json({ error: error.message || "Failed to create folder" });
+    }
+  });
+
   return httpServer;
 }
