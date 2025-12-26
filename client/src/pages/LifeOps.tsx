@@ -5,13 +5,14 @@
    Target: 1-2 minutes to complete
    ================================================================ */
 
-import { useState } from "react";
-import { useLogs, useCreateLog } from "@/hooks/use-bruce-ops";
+import { useState, useEffect } from "react";
+import { useLogs, useCreateLog, useLogByDate, useUpdateLog } from "@/hooks/use-bruce-ops";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertLogSchema, DAY_TYPES, PRIMARY_EMOTIONS, WIN_CATEGORIES, TIME_DRAINS } from "@shared/schema";
+import { insertLogSchema, DAY_TYPES, PRIMARY_EMOTIONS, WIN_CATEGORIES, TIME_DRAINS, type Log } from "@shared/schema";
 import { z } from "zod";
 import { format } from "date-fns";
+import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,49 +118,111 @@ export default function LifeOps() {
 }
 
 function DailyLogForm() {
-  const { mutate: createLog, isPending } = useCreateLog();
+  const today = format(new Date(), "yyyy-MM-dd");
+  const { data: existingLog, isLoading: checkingExisting } = useLogByDate(today);
+  const { mutate: createLog, isPending: isCreating } = useCreateLog();
+  const { mutate: updateLog, isPending: isUpdating } = useUpdateLog();
+  
   const [deepDivesOpen, setDeepDivesOpen] = useState(false);
+  const [quickMode, setQuickMode] = useState(true);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  
+  const isEditMode = !!existingLog?.id;
+  const isPending = isCreating || isUpdating;
+  
+  const defaultValues: LogFormValues = {
+    date: today,
+    energy: 5,
+    stress: 5,
+    mood: 5,
+    focus: 5,
+    sleepQuality: 5,
+    moneyPressure: 5,
+    connection: 5,
+    vaping: false,
+    alcohol: false,
+    junkFood: false,
+    doomScrolling: false,
+    lateScreens: false,
+    skippedMeals: false,
+    excessCaffeine: false,
+    exercise: false,
+    dayType: "work",
+    primaryEmotion: "peaceful",
+    winCategory: "none",
+    timeDrain: "none",
+  };
   
   const form = useForm<LogFormValues>({
     resolver: zodResolver(insertLogSchema),
-    defaultValues: {
-      date: format(new Date(), "yyyy-MM-dd"),
-      energy: 5,
-      stress: 5,
-      mood: 5,
-      focus: 5,
-      sleepQuality: 5,
-      moneyPressure: 5,
-      connection: 5,
-      vaping: false,
-      alcohol: false,
-      junkFood: false,
-      doomScrolling: false,
-      lateScreens: false,
-      skippedMeals: false,
-      excessCaffeine: false,
-      exercise: false,
-      dayType: "work",
-      primaryEmotion: "peaceful",
-      winCategory: "none",
-      timeDrain: "none",
-    }
+    defaultValues,
   });
 
+  useEffect(() => {
+    if (existingLog) {
+      const logData = {
+        ...defaultValues,
+        ...existingLog,
+      };
+      form.reset(logData);
+    }
+  }, [existingLog]);
+
   const onSubmit = (data: LogFormValues) => {
-    createLog(data, {
-      onSuccess: () => form.reset()
-    });
+    setSaveSuccess(false);
+    
+    const handleSuccess = () => {
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    };
+    
+    const handleError = () => {
+      setSaveSuccess(false);
+    };
+    
+    if (isEditMode && existingLog?.id) {
+      updateLog({ ...data, id: existingLog.id }, {
+        onSuccess: handleSuccess,
+        onError: handleError
+      });
+    } else {
+      createLog(data, {
+        onSuccess: handleSuccess,
+        onError: handleError
+      });
+    }
   };
+
+  if (checkingExisting) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <CardWithBotanical className="max-w-4xl">
       <Card className="border-border/30 bg-card/80 backdrop-blur-sm">
         <CardHeader className="border-b border-border/20">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            Daily Calibration
-            <span className="text-xs font-normal text-muted-foreground ml-auto">~1-2 min</span>
+          <CardTitle className="text-lg flex items-center flex-wrap gap-2">
+            <span className={`w-2 h-2 rounded-full ${isEditMode ? 'bg-amber-400' : 'bg-emerald-400'} animate-pulse`} />
+            <span>{isEditMode ? 'Update Today\'s Log' : 'Daily Calibration'}</span>
+            <span className="text-xs font-normal text-muted-foreground">
+              {format(new Date(), "MMM d, yyyy")}
+            </span>
+            <div className="ml-auto flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs">
+                <span className={quickMode ? 'text-muted-foreground' : 'text-foreground font-medium'}>Full</span>
+                <Switch 
+                  checked={quickMode}
+                  onCheckedChange={setQuickMode}
+                  data-testid="switch-quick-mode"
+                />
+                <span className={quickMode ? 'text-foreground font-medium' : 'text-muted-foreground'}>Quick</span>
+              </div>
+              <span className="text-xs font-normal text-muted-foreground">{quickMode ? '~1 min' : '~3 min'}</span>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
@@ -261,6 +324,9 @@ function DailyLogForm() {
               </div>
             </div>
 
+            {/* SECTIONS 3-5: Only show when NOT in quick mode */}
+            {!quickMode && (
+            <>
             {/* SECTION 3: QUICK CONTEXT */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -450,13 +516,24 @@ function DailyLogForm() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
+            </>
+            )}
 
-            <Button type="submit" className="w-full" disabled={isPending} data-testid="button-save-log">
+            <Button 
+              type="submit" 
+              className={`w-full transition-all ${saveSuccess ? 'bg-emerald-600 hover:bg-emerald-600' : ''}`} 
+              disabled={isPending} 
+              data-testid="button-save-log"
+            >
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
                 </>
-              ) : "Save Daily Log"}
+              ) : saveSuccess ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" /> Saved
+                </>
+              ) : isEditMode ? "Update Log" : "Save Daily Log"}
             </Button>
           </form>
         </CardContent>
@@ -480,7 +557,7 @@ function LogHistory() {
 
   return (
     <div className="space-y-6">
-      {logs?.map((log) => (
+      {logs?.map((log: Log) => (
         <Card key={log.id} className="overflow-hidden border-border/40 hover:border-emerald-500/30 transition-all backdrop-blur-sm" data-testid={`card-log-${log.id}`}>
           <div className="flex flex-col md:flex-row">
             <div className="p-6 md:w-64 bg-secondary/30 border-b md:border-b-0 md:border-r border-border/40 flex flex-col justify-center space-y-4">

@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useTheme, ThemeMode } from "./ThemeProvider";
 import { InterfaceOverlay } from "./InterfaceOverlay";
 import { BotanicalCorner } from "./BotanicalMotifs";
+import { DemoBanner } from "./DemoBanner";
 
 interface LayoutProps {
   children: ReactNode;
@@ -300,6 +301,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 lg:pl-64 w-full min-h-screen overflow-y-auto pt-16 lg:pt-0 aurora-bg">
+        <DemoBanner />
         <div className="container mx-auto max-w-6xl p-4 md:p-6 lg:p-8 animate-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>

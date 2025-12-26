@@ -13,6 +13,7 @@ export interface IStorage {
   getLogs(userId: string): Promise<Log[]>;
   createLog(userId: string, log: InsertLog): Promise<Log>;
   getLogByDate(userId: string, date: string): Promise<Log | undefined>;
+  updateLog(userId: string, id: number, updates: InsertLog): Promise<Log | undefined>;
   updateLogSummary(userId: string, id: number, summary: string): Promise<Log>;
   
   // Ideas (user-scoped)
@@ -71,6 +72,14 @@ export class DatabaseStorage implements IStorage {
     const [log] = await db.select().from(logs)
       .where(and(eq(logs.userId, userId), eq(logs.date, date)));
     return log;
+  }
+
+  async updateLog(userId: string, id: number, updates: InsertLog): Promise<Log | undefined> {
+    const [updated] = await db.update(logs)
+      .set(updates)
+      .where(and(eq(logs.id, id), eq(logs.userId, userId)))
+      .returning();
+    return updated;
   }
 
   async updateLogSummary(userId: string, id: number, summary: string): Promise<Log> {

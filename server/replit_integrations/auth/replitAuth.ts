@@ -6,10 +6,18 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import MemoryStore from "memorystore";
 import { authStorage } from "./storage";
+
+const isReplitEnvironment = () => {
+  return !!process.env.REPL_ID && !!process.env.ISSUER_URL;
+};
 
 const getOidcConfig = memoize(
   async () => {
+    if (!isReplitEnvironment()) {
+      throw new Error("OIDC not available outside Replit environment");
+    }
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
       process.env.REPL_ID!
@@ -20,21 +28,37 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
+  const secret = process.env.SESSION_SECRET || "development-secret-change-me";
+  
+  let store;
+  if (process.env.DATABASE_URL) {
+    try {
+      const pgStore = connectPg(session);
+      store = new pgStore({
+        conString: process.env.DATABASE_URL,
+        createTableIfMissing: true,
+        ttl: sessionTtl,
+        tableName: "sessions",
+      });
+    } catch (error) {
+      console.warn("Failed to create PostgreSQL session store, using memory store:", error);
+      const MemStore = MemoryStore(session);
+      store = new MemStore({ checkPeriod: sessionTtl });
+    }
+  } else {
+    console.warn("DATABASE_URL not set, using memory session store");
+    const MemStore = MemoryStore(session);
+    store = new MemStore({ checkPeriod: sessionTtl });
+  }
+
   return session({
-    secret: process.env.SESSION_SECRET!,
-    store: sessionStore,
+    secret,
+    store,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
     },
   });
@@ -66,6 +90,35 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  if (!isReplitEnvironment()) {
+    console.log("===========================================");
+    console.log("STANDALONE MODE: Replit Auth not available");
+    console.log("Use ?demo=true for demo mode access");
+    console.log("===========================================");
+    
+    app.get("/api/login", (_req, res) => {
+      res.status(503).json({ 
+        message: "Standalone mode: Use demo mode (?demo=true) or configure alternate auth",
+        standaloneMode: true
+      });
+    });
+
+    app.get("/api/callback", (_req, res) => {
+      res.redirect("/?demo=true");
+    });
+
+    app.get("/api/logout", (req, res) => {
+      req.logout(() => {
+        res.redirect("/");
+      });
+    });
+
+    passport.serializeUser((user: Express.User, cb) => cb(null, user));
+    passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+    
+    return;
+  }
+
   const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
@@ -78,10 +131,8 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  // Keep track of registered strategies
   const registeredStrategies = new Set<string>();
 
-  // Helper function to ensure strategy exists for a domain
   const ensureStrategy = (domain: string) => {
     const strategyName = `replitauth:${domain}`;
     if (!registeredStrategies.has(strategyName)) {
@@ -133,7 +184,7 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated() || !user?.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 

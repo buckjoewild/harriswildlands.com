@@ -60,6 +60,17 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // ==================== HEALTH CHECK (NO AUTH) ====================
+  app.get("/api/health", (_req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      version: "1.0.0",
+      environment: process.env.NODE_ENV || "development",
+      aiEnabled: !!OPENROUTER_API_KEY
+    });
+  });
+
   // Setup Replit Auth BEFORE all other routes
   await setupAuth(app);
   registerAuthRoutes(app);
@@ -87,12 +98,42 @@ export async function registerRoutes(
     res.json(logs);
   });
 
+  // Get log by date (for duplicate detection)
+  app.get("/api/logs/:date", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const { date } = req.params;
+    const log = await storage.getLogByDate(userId, date);
+    if (!log) {
+      return res.status(404).json({ message: "No log found for this date" });
+    }
+    res.json(log);
+  });
+
   app.post(api.logs.create.path, isAuthenticated, async (req, res) => {
     try {
       const userId = getUserId(req);
       const input = api.logs.create.input.parse(req.body);
       const log = await storage.createLog(userId, input);
       res.status(201).json(log);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  // Update existing log
+  app.put("/api/logs/:id", isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const id = Number(req.params.id);
+      const input = api.logs.create.input.parse(req.body);
+      const log = await storage.updateLog(userId, id, input);
+      if (!log) {
+        return res.status(404).json({ message: "Log not found" });
+      }
+      res.json(log);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
@@ -357,6 +398,40 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
     res.setHeader('Content-Type', 'text/plain');
     res.setHeader('Content-Disposition', 'attachment; filename="weekly-review.txt"');
     res.send(pdfContent);
+  });
+
+  // ==================== DATA EXPORT ====================
+  
+  app.get("/api/export/data", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    
+    const [logs, ideas, goals, checkins, teaching, harris, settings] = await Promise.all([
+      storage.getLogs(userId),
+      storage.getIdeas(userId),
+      storage.getGoals(userId),
+      storage.getCheckins(userId),
+      storage.getTeachingRequests(userId),
+      storage.getHarrisContent(userId),
+      storage.getSettings(),
+    ]);
+    
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      version: "1.0.0",
+      data: {
+        logs,
+        ideas,
+        goals,
+        checkins,
+        teachingRequests: teaching,
+        harrisContent: harris,
+        settings
+      }
+    };
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="bruceops-export.json"');
+    res.json(exportData);
   });
 
   return httpServer;

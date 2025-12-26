@@ -74,6 +74,14 @@ Preferred communication style: Simple, everyday language.
 ### Authentication
 - **Replit Auth**: OpenID Connect-based authentication
 - Requires `ISSUER_URL`, `REPL_ID`, and `SESSION_SECRET` environment variables
+- **Standalone Mode**: When REPL_ID is missing, falls back to memory sessions and shows demo mode prompt
+
+### Standalone Deployment (Phase 1)
+The app supports standalone operation outside Replit:
+- **Demo Mode**: Enabled via `?demo=true` URL parameter or localStorage
+- **Health Check**: `/api/health` endpoint for Docker health checks
+- **Data Export**: `/api/export/data` downloads all user data as JSON
+- **Graceful Auth Fallback**: Non-Replit environments use memory sessions with demo mode
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit`: Database ORM and migrations

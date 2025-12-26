@@ -39,6 +39,23 @@ export function useLogs() {
   });
 }
 
+export function useLogByDate(date: string) {
+  return useQuery({
+    queryKey: ["/api/logs", date],
+    queryFn: async () => {
+      if (isDemoMode()) {
+        const log = demoLogs.find((l: any) => l.date === date);
+        return log || null;
+      }
+      const res = await fetch(`/api/logs/${date}`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("Failed to fetch log");
+      return await res.json();
+    },
+    enabled: !!date,
+  });
+}
+
 export function useCreateLog() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -56,13 +73,42 @@ export function useCreateLog() {
       if (!res.ok) throw new Error("Failed to create log");
       return api.logs.create.responses[201].parse(await res.json());
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.logs.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logs", variables.date] });
       queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
-      toast({ title: isDemoMode() ? "Demo: Log Saved" : "Log Saved", description: "Your daily log has been recorded." });
     },
     onError: (err) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err.message || "Failed to save log", variant: "destructive" });
+    }
+  });
+}
+
+export function useUpdateLog() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ id, date, ...logData }: InsertLog & { id: number }) => {
+      if (isDemoMode()) {
+        return { id, date, ...logData, createdAt: new Date().toISOString() } as any;
+      }
+      const payload: InsertLog = { date, ...logData };
+      const res = await fetch(`/api/logs/${id}`, {
+        method: "PUT",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Failed to update log");
+      return await res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: [api.logs.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logs", variables.date] });
+      queryClient.invalidateQueries({ queryKey: [api.dashboard.get.path] });
+    },
+    onError: (err) => {
+      toast({ title: "Error", description: err.message || "Failed to update log", variant: "destructive" });
     }
   });
 }
