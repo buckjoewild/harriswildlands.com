@@ -73,9 +73,9 @@ export default function BruceOps() {
   ];
 
   const quickActions = [
-    { name: "Start Daily Log", icon: Play, lane: "LifeOps", path: "/lifeops" },
-    { name: "Capture Idea", icon: Lightbulb, lane: "ThinkOps", path: "/thinkops" },
-    { name: "Generate Content", icon: Sparkles, lane: "HarrisWildlands", path: "/harriswildlands" },
+    { name: "Start Daily Log", icon: Play, lane: "LifeOps", path: "/life-ops" },
+    { name: "Capture Idea", icon: Lightbulb, lane: "ThinkOps", path: "/think-ops" },
+    { name: "Generate Content", icon: Sparkles, lane: "HarrisWildlands", path: "/harris" },
     { name: "Plan Lesson", icon: GraduationCap, lane: "Teaching", path: "/teaching" },
   ];
 
