@@ -244,5 +244,120 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  // ==================== GOALS ====================
+  
+  app.get(api.goals.list.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const goals = await storage.getGoals(userId);
+    res.json(goals);
+  });
+
+  app.post(api.goals.create.path, isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const input = api.goals.create.input.parse(req.body);
+      const goal = await storage.createGoal(userId, input);
+      res.status(201).json(goal);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.put(api.goals.update.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const id = Number(req.params.id);
+    const { userId: _, ...updates } = req.body;
+    const updated = await storage.updateGoal(userId, id, updates);
+    if (!updated) return res.status(404).json({ message: "Goal not found" });
+    res.json(updated);
+  });
+
+  // ==================== CHECKINS ====================
+  
+  app.get(api.checkins.list.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
+    const checkins = await storage.getCheckins(userId, startDate, endDate);
+    res.json(checkins);
+  });
+
+  app.post(api.checkins.upsert.path, isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const input = api.checkins.upsert.input.parse(req.body);
+      const checkin = await storage.upsertCheckin(userId, input.goalId, input.date, input.done, input.score, input.note);
+      res.json(checkin);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.post(api.checkins.batch.path, isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const inputs = api.checkins.batch.input.parse(req.body);
+      const results = await Promise.all(
+        inputs.map(input => 
+          storage.upsertCheckin(userId, input.goalId, input.date, input.done, input.score, input.note)
+        )
+      );
+      res.json(results);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  // ==================== WEEKLY REVIEW ====================
+  
+  app.get(api.weeklyReview.get.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const review = await storage.getWeeklyReview(userId);
+    res.json(review);
+  });
+
+  app.get(api.weeklyReview.exportPdf.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const review = await storage.getWeeklyReview(userId);
+    
+    const pdfContent = `
+WEEKLY GOAL REVIEW
+==================
+Period: ${review.stats.startDate} to ${review.stats.endDate}
+
+SUMMARY
+-------
+Completion Rate: ${review.stats.completionRate}%
+Total Check-ins: ${review.stats.totalCheckins}
+Completed: ${review.stats.completedCheckins}
+
+GOALS
+-----
+${review.goals.map(g => `- [${g.domain.toUpperCase()}] ${g.title} (Priority: ${g.priority})`).join('\n')}
+
+DOMAIN COVERAGE
+---------------
+${Object.entries(review.stats.domainStats || {}).map(([domain, stats]: [string, any]) => 
+  `${domain}: ${stats.checkins}/${stats.goals * 7} check-ins`
+).join('\n')}
+
+DRIFT FLAGS
+-----------
+${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n') : 'No drift flags this week.'}
+`;
+
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Disposition', 'attachment; filename="weekly-review.txt"');
+    res.send(pdfContent);
+  });
+
   return httpServer;
 }

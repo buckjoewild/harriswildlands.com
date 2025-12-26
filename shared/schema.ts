@@ -163,6 +163,50 @@ export const settings = pgTable("settings", {
   value: text("value").notNull(),
 });
 
+// === GOAL TRACKING ===
+
+// Domains for goal categorization
+export const GOAL_DOMAINS = ["faith", "family", "work", "health", "logistics", "property", "ideas", "discipline"] as const;
+
+// Goals table
+export const goals = pgTable("goals", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  domain: text("domain").notNull(), // faith, family, work, health, logistics, property, ideas, discipline
+  title: text("title").notNull(),
+  description: text("description"),
+  targetType: text("target_type").default("binary"), // binary, count, duration
+  weeklyMinimum: integer("weekly_minimum").default(1), // e.g., 3 workouts/week
+  startDate: text("start_date"), // YYYY-MM-DD
+  dueDate: text("due_date"), // YYYY-MM-DD
+  status: text("status").default("active"), // active, paused, archived
+  priority: integer("priority").default(2), // 1=high, 2=medium, 3=low
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Goal check-ins table
+export const checkins = pgTable("checkins", {
+  id: serial("id").primaryKey(),
+  goalId: integer("goal_id").notNull(),
+  userId: text("user_id").notNull(),
+  date: text("date").notNull(), // YYYY-MM-DD
+  done: boolean("done").default(false),
+  score: integer("score"), // 1-10 optional rating
+  note: text("note"), // optional short note
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Drift flags table
+export const driftFlags = pgTable("drift_flags", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  type: text("type").notNull(), // checkin_dropoff, consistency_drift, overload, domain_neglect
+  timeframeStart: text("timeframe_start").notNull(), // YYYY-MM-DD
+  timeframeEnd: text("timeframe_end").notNull(), // YYYY-MM-DD
+  sentence: text("sentence").notNull(), // single factual observation
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // === SCHEMAS ===
 
 export const insertLogSchema = createInsertSchema(logs).omit({ id: true, userId: true, createdAt: true, aiSummary: true });
@@ -171,6 +215,9 @@ export const insertTeachingRequestSchema = createInsertSchema(teachingRequests).
 export const insertHarrisContentSchema = createInsertSchema(harrisContent).omit({ id: true, userId: true, createdAt: true, generatedCopy: true });
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
 export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
+export const insertGoalSchema = createInsertSchema(goals).omit({ id: true, userId: true, createdAt: true });
+export const insertCheckinSchema = createInsertSchema(checkins).omit({ id: true, userId: true, createdAt: true });
+export const insertDriftFlagSchema = createInsertSchema(driftFlags).omit({ id: true, userId: true, createdAt: true });
 
 // === TYPES ===
 
@@ -191,6 +238,15 @@ export type InsertSetting = z.infer<typeof insertSettingsSchema>;
 
 export type UserSettings = typeof userSettings.$inferSelect;
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
+
+export type Goal = typeof goals.$inferSelect;
+export type InsertGoal = z.infer<typeof insertGoalSchema>;
+
+export type Checkin = typeof checkins.$inferSelect;
+export type InsertCheckin = z.infer<typeof insertCheckinSchema>;
+
+export type DriftFlag = typeof driftFlags.$inferSelect;
+export type InsertDriftFlag = z.infer<typeof insertDriftFlagSchema>;
 
 // === API REQUEST TYPES ===
 

@@ -5,11 +5,15 @@ import {
   insertTeachingRequestSchema, 
   insertHarrisContentSchema,
   insertSettingsSchema,
+  insertGoalSchema,
+  insertCheckinSchema,
   logs,
   ideas,
   teachingRequests,
   harrisContent,
-  settings
+  settings,
+  goals,
+  checkins
 } from './schema';
 
 // ============================================
@@ -154,6 +158,101 @@ export const api = {
       input: z.object({ value: z.string() }),
       responses: {
         200: z.custom<typeof settings.$inferSelect>(),
+      },
+    },
+  },
+  goals: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/goals',
+      responses: {
+        200: z.array(z.custom<typeof goals.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/goals',
+      input: insertGoalSchema,
+      responses: {
+        201: z.custom<typeof goals.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/goals/:id',
+      input: z.object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        domain: z.string().optional(),
+        status: z.string().optional(),
+        priority: z.number().optional(),
+        weeklyMinimum: z.number().optional(),
+        dueDate: z.string().optional(),
+      }),
+      responses: {
+        200: z.custom<typeof goals.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
+  checkins: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/checkins',
+      responses: {
+        200: z.array(z.custom<typeof checkins.$inferSelect>()),
+      },
+    },
+    upsert: {
+      method: 'POST' as const,
+      path: '/api/checkins',
+      input: z.object({
+        goalId: z.number(),
+        date: z.string(),
+        done: z.boolean(),
+        score: z.number().optional(),
+        note: z.string().optional(),
+      }),
+      responses: {
+        200: z.custom<typeof checkins.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    batch: {
+      method: 'POST' as const,
+      path: '/api/checkins/batch',
+      input: z.array(z.object({
+        goalId: z.number(),
+        date: z.string(),
+        done: z.boolean(),
+        score: z.number().optional(),
+        note: z.string().optional(),
+      })),
+      responses: {
+        200: z.array(z.custom<typeof checkins.$inferSelect>()),
+        400: errorSchemas.validation,
+      },
+    },
+  },
+  weeklyReview: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/review/weekly',
+      responses: {
+        200: z.object({
+          goals: z.array(z.custom<typeof goals.$inferSelect>()),
+          checkins: z.array(z.custom<typeof checkins.$inferSelect>()),
+          stats: z.any(),
+          driftFlags: z.array(z.string()),
+        }),
+      },
+    },
+    exportPdf: {
+      method: 'GET' as const,
+      path: '/api/export/weekly.pdf',
+      responses: {
+        200: z.any(),
       },
     },
   },

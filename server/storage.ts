@@ -1,10 +1,12 @@
 import { db } from "./db";
 import {
-  logs, ideas, teachingRequests, harrisContent, settings,
+  logs, ideas, teachingRequests, harrisContent, settings, goals, checkins, driftFlags,
   type InsertLog, type InsertIdea, type InsertTeachingRequest, type InsertHarrisContent,
-  type Log, type Idea, type TeachingRequest, type HarrisContent, type Setting
+  type InsertGoal, type InsertCheckin,
+  type Log, type Idea, type TeachingRequest, type HarrisContent, type Setting,
+  type Goal, type Checkin, type DriftFlag
 } from "@shared/schema";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Logs (user-scoped)
@@ -34,6 +36,21 @@ export interface IStorage {
   
   // Dashboard (user-scoped)
   getDashboardStats(userId: string): Promise<{ logsToday: number; openLoops: number }>;
+  
+  // Goals (user-scoped)
+  getGoals(userId: string): Promise<Goal[]>;
+  getGoal(userId: string, id: number): Promise<Goal | undefined>;
+  createGoal(userId: string, goal: InsertGoal): Promise<Goal>;
+  updateGoal(userId: string, id: number, updates: Partial<Goal>): Promise<Goal>;
+  
+  // Checkins (user-scoped)
+  getCheckins(userId: string, startDate?: string, endDate?: string): Promise<Checkin[]>;
+  getCheckinsByGoal(userId: string, goalId: number): Promise<Checkin[]>;
+  createCheckin(userId: string, checkin: InsertCheckin): Promise<Checkin>;
+  upsertCheckin(userId: string, goalId: number, date: string, done: boolean, score?: number, note?: string): Promise<Checkin>;
+  
+  // Weekly review
+  getWeeklyReview(userId: string): Promise<{ goals: Goal[]; checkins: Checkin[]; stats: any; driftFlags: string[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -162,6 +179,149 @@ export class DatabaseStorage implements IStorage {
     return {
       logsToday: Number(logsToday[0]?.count || 0),
       openLoops: Number(loops[0]?.count || 0),
+    };
+  }
+
+  // -------------------- GOALS (USER-SCOPED) --------------------
+  
+  async getGoals(userId: string): Promise<Goal[]> {
+    return await db.select().from(goals)
+      .where(eq(goals.userId, userId))
+      .orderBy(desc(goals.createdAt));
+  }
+
+  async getGoal(userId: string, id: number): Promise<Goal | undefined> {
+    const [goal] = await db.select().from(goals)
+      .where(and(eq(goals.id, id), eq(goals.userId, userId)));
+    return goal;
+  }
+
+  async createGoal(userId: string, goal: InsertGoal): Promise<Goal> {
+    const [newGoal] = await db.insert(goals).values({ ...goal, userId }).returning();
+    return newGoal;
+  }
+
+  async updateGoal(userId: string, id: number, updates: Partial<Goal>): Promise<Goal> {
+    const { userId: _, ...safeUpdates } = updates as any;
+    const [updated] = await db.update(goals)
+      .set(safeUpdates)
+      .where(and(eq(goals.id, id), eq(goals.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  // -------------------- CHECKINS (USER-SCOPED) --------------------
+  
+  async getCheckins(userId: string, startDate?: string, endDate?: string): Promise<Checkin[]> {
+    let query = db.select().from(checkins).where(eq(checkins.userId, userId));
+    if (startDate && endDate) {
+      query = db.select().from(checkins)
+        .where(and(
+          eq(checkins.userId, userId),
+          gte(checkins.date, startDate),
+          lte(checkins.date, endDate)
+        ));
+    }
+    return await query.orderBy(desc(checkins.date));
+  }
+
+  async getCheckinsByGoal(userId: string, goalId: number): Promise<Checkin[]> {
+    return await db.select().from(checkins)
+      .where(and(eq(checkins.userId, userId), eq(checkins.goalId, goalId)))
+      .orderBy(desc(checkins.date));
+  }
+
+  async createCheckin(userId: string, checkin: InsertCheckin): Promise<Checkin> {
+    const [newCheckin] = await db.insert(checkins).values({ ...checkin, userId }).returning();
+    return newCheckin;
+  }
+
+  async upsertCheckin(userId: string, goalId: number, date: string, done: boolean, score?: number, note?: string): Promise<Checkin> {
+    const existing = await db.select().from(checkins)
+      .where(and(eq(checkins.userId, userId), eq(checkins.goalId, goalId), eq(checkins.date, date)));
+    
+    if (existing.length > 0) {
+      const [updated] = await db.update(checkins)
+        .set({ done, score, note })
+        .where(and(eq(checkins.userId, userId), eq(checkins.goalId, goalId), eq(checkins.date, date)))
+        .returning();
+      return updated;
+    } else {
+      const [newCheckin] = await db.insert(checkins)
+        .values({ goalId, userId, date, done, score, note })
+        .returning();
+      return newCheckin;
+    }
+  }
+
+  // -------------------- WEEKLY REVIEW --------------------
+  
+  async getWeeklyReview(userId: string): Promise<{ goals: Goal[]; checkins: Checkin[]; stats: any; driftFlags: string[] }> {
+    const today = new Date();
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    const startDate = weekAgo.toISOString().split('T')[0];
+    const endDate = today.toISOString().split('T')[0];
+    
+    const userGoals = await this.getGoals(userId);
+    const activeGoals = userGoals.filter(g => g.status === 'active');
+    
+    const weekCheckins = await this.getCheckins(userId, startDate, endDate);
+    
+    const completedCheckins = weekCheckins.filter(c => c.done);
+    const totalPossible = activeGoals.length * 7;
+    const completionRate = totalPossible > 0 ? (completedCheckins.length / totalPossible) * 100 : 0;
+    
+    const checkinDays = new Set(weekCheckins.map(c => c.date));
+    const missedDays = 7 - checkinDays.size;
+    
+    const domainStats: Record<string, { goals: number; checkins: number }> = {};
+    activeGoals.forEach(g => {
+      if (!domainStats[g.domain]) domainStats[g.domain] = { goals: 0, checkins: 0 };
+      domainStats[g.domain].goals++;
+    });
+    weekCheckins.forEach(c => {
+      const goal = userGoals.find(g => g.id === c.goalId);
+      if (goal && c.done) {
+        if (!domainStats[goal.domain]) domainStats[goal.domain] = { goals: 0, checkins: 0 };
+        domainStats[goal.domain].checkins++;
+      }
+    });
+    
+    const flags: string[] = [];
+    
+    if (missedDays >= 4) {
+      flags.push(`Goal check-ins were missed on ${missedDays} days over the past week.`);
+    }
+    
+    if (completionRate < 40 && activeGoals.length > 0) {
+      flags.push(`Completion rate was below 40% over the past week.`);
+    }
+    
+    if (activeGoals.length > 7 && completionRate < 60) {
+      flags.push(`More than 7 active goals with reduced completion over the past week.`);
+    }
+    
+    Object.entries(domainStats).forEach(([domain, stats]) => {
+      if (stats.goals > 0 && stats.checkins === 0) {
+        flags.push(`No goal check-ins occurred for the ${domain} domain over the past week.`);
+      }
+    });
+    
+    return {
+      goals: activeGoals,
+      checkins: weekCheckins,
+      stats: {
+        completionRate: Math.round(completionRate),
+        totalCheckins: weekCheckins.length,
+        completedCheckins: completedCheckins.length,
+        missedDays,
+        domainStats,
+        startDate,
+        endDate
+      },
+      driftFlags: flags
     };
   }
 }

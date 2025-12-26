@@ -19,7 +19,8 @@ import {
   Leaf,
   FlaskConical,
   Church,
-  Eye
+  Eye,
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -48,6 +49,7 @@ export function Layout({ children }: LayoutProps) {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/life-ops", label: "LifeOps", icon: Activity },
+    { href: "/goals", label: "Goals", icon: Target },
     { href: "/think-ops", label: "ThinkOps", icon: Lightbulb },
     { href: "/bruce-ops", label: "BruceOps", icon: Eye },
     { href: "/teaching", label: "Teaching", icon: GraduationCap },

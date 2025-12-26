@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 
 import Dashboard from "@/pages/Dashboard";
 import LifeOps from "@/pages/LifeOps";
+import Goals from "@/pages/Goals";
 import ThinkOps from "@/pages/ThinkOps";
 import TeachingAssistant from "@/pages/TeachingAssistant";
 import HarrisWildlands from "@/pages/HarrisWildlands";
@@ -21,6 +22,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/life-ops" component={LifeOps} />
+        <Route path="/goals" component={Goals} />
         <Route path="/think-ops" component={ThinkOps} />
         <Route path="/teaching" component={TeachingAssistant} />
         <Route path="/harris" component={HarrisWildlands} />
