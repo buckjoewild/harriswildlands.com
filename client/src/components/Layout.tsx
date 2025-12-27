@@ -128,12 +128,13 @@ export function Layout({ children }: LayoutProps) {
               </div>
             </div>
             
-            <div>
-              <h1 className="font-mono font-bold text-4xl tracking-widest mb-3 text-white drop-shadow-lg uppercase">
-                Harris Wildlands
+            <div className="bg-black/60 border border-emerald-500/50 p-6 backdrop-blur-sm">
+              <p className="font-mono text-emerald-400 text-sm mb-2">C:\WILDLANDS&gt;</p>
+              <h1 className="font-mono font-normal text-3xl md:text-4xl tracking-tight text-emerald-300 uppercase">
+                HARRIS_WILDLANDS<span className="animate-pulse">_</span>
               </h1>
-              <p className="text-lg text-emerald-100/80 italic font-light">
-                Where roots remember what the canopy dreams.
+              <p className="font-mono text-emerald-400/90 text-sm mt-4 tracking-wide">
+                &gt; faith over fear &amp; systems over skills
               </p>
             </div>
             
