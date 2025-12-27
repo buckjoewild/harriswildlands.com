@@ -20,7 +20,11 @@ import {
   FlaskConical,
   Church,
   Eye,
-  Target
+  Target,
+  Sprout,
+  TreeDeciduous,
+  CloudSun,
+  Microscope
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -48,13 +52,13 @@ export function Layout({ children }: LayoutProps) {
   const { theme, setTheme, overlayEnabled, setOverlayEnabled } = useTheme();
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/life-ops", label: "LifeOps", icon: Activity },
-    { href: "/goals", label: "Goals", icon: Target },
-    { href: "/think-ops", label: "ThinkOps", icon: Lightbulb },
-    { href: "/bruce-ops", label: "BruceOps", icon: Eye },
-    { href: "/teaching", label: "Teaching", icon: GraduationCap },
-    { href: "/harris", label: "Wildlands", icon: Trees },
+    { href: "/", label: "Trunk", sublabel: "Command Center", icon: TreeDeciduous },
+    { href: "/life-ops", label: "Roots", sublabel: "LifeOps", icon: Sprout },
+    { href: "/goals", label: "Growth", sublabel: "Goals", icon: Target },
+    { href: "/think-ops", label: "Canopy", sublabel: "ThinkOps", icon: CloudSun },
+    { href: "/bruce-ops", label: "Core", sublabel: "BruceOps", icon: Eye },
+    { href: "/teaching", label: "Lab", sublabel: "Teaching", icon: Microscope },
+    { href: "/harris", label: "Wildlands", sublabel: "Brand", icon: Trees },
   ];
 
   const cycleTheme = () => {
@@ -64,22 +68,27 @@ export function Layout({ children }: LayoutProps) {
     setTheme(themes[nextIndex]);
   };
 
-  const NavLink = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => {
+  const NavLink = ({ href, icon: Icon, label, sublabel }: { href: string; icon: any; label: string; sublabel?: string }) => {
     const isActive = location === href;
     return (
       <Link href={href}>
         <div className={cn(
           "holo-nav-item flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 cursor-pointer",
-          isActive && "active bg-primary/10 text-foreground"
+          isActive && "active bg-emerald-500/10 border-l-2 border-emerald-500"
         )}>
           <Icon className={cn(
-            "w-4 h-4 transition-colors",
-            isActive ? "text-primary" : "text-muted-foreground"
+            "w-5 h-5 transition-colors",
+            isActive ? "text-emerald-400" : "text-muted-foreground"
           )} />
-          <span className={cn(
-            "text-sm tracking-wide",
-            isActive ? "text-foreground font-medium" : "text-muted-foreground"
-          )}>{label}</span>
+          <div className="flex flex-col">
+            <span className={cn(
+              "text-sm tracking-wide leading-tight",
+              isActive ? "text-foreground font-medium" : "text-muted-foreground"
+            )}>{label}</span>
+            {sublabel && (
+              <span className="text-[10px] text-muted-foreground/70 tracking-wide">{sublabel}</span>
+            )}
+          </div>
         </div>
       </Link>
     );
@@ -103,44 +112,46 @@ export function Layout({ children }: LayoutProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 aurora-bg grain-texture">
-        <div className="max-w-md text-center space-y-8 relative">
-          <div className="botanical-corner botanical-corner-tl opacity-20">
-            <BotanicalCorner />
-          </div>
-          <div className="botanical-corner botanical-corner-br opacity-20">
-            <BotanicalCorner />
-          </div>
-          
-          <div className="relative w-24 h-24 mx-auto">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 blur-xl" />
-            <div className="relative w-full h-full rounded-2xl bg-card border border-primary/20 flex items-center justify-center">
-              <Trees className="w-10 h-10 text-primary" />
+      <div className="min-h-screen relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/assets/img/root-system-v2.webp')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
+        
+        <div className="relative min-h-screen flex flex-col items-center justify-end pb-20 p-4">
+          <div className="max-w-md text-center space-y-6">
+            <div className="relative w-20 h-20 mx-auto">
+              <div className="absolute inset-0 rounded-full bg-emerald-500/30 blur-xl animate-pulse" />
+              <div className="relative w-full h-full rounded-full bg-black/40 backdrop-blur-md border border-emerald-500/40 flex items-center justify-center">
+                <Trees className="w-8 h-8 text-emerald-400" />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <h1 className="font-display font-bold text-4xl tracking-tight mb-2">Harris Wildlands</h1>
-            <p className="font-principle text-lg text-muted-foreground italic">
-              Faithful intelligence for family stewardship, wonder, and building.
+            
+            <div>
+              <h1 className="font-display font-bold text-4xl tracking-tight mb-2 text-white drop-shadow-lg">
+                Harris Wildlands
+              </h1>
+              <p className="text-lg text-emerald-100/80 italic">
+                Faithful intelligence for family stewardship, wonder, and building.
+              </p>
+            </div>
+            
+            <Button 
+              size="lg" 
+              className="w-full max-w-xs bg-emerald-600/90 hover:bg-emerald-500/90 text-white border border-emerald-400/50 backdrop-blur-sm shadow-lg shadow-emerald-900/50"
+              onClick={() => window.location.href = "/api/login"}
+              data-testid="button-login"
+            >
+              <User className="w-5 h-5 mr-2" />
+              Enter the Wildlands
+            </Button>
+            
+            <p className="text-xs text-emerald-200/60 tracking-widest uppercase">
+              Private by Default // No Sharing
             </p>
           </div>
-          
-          <Button 
-            size="lg" 
-            className="w-full max-w-xs glow-hover"
-            onClick={() => window.location.href = "/api/login"}
-            data-testid="button-login"
-          >
-            <User className="w-5 h-5 mr-2" />
-            Enter the Wildlands
-          </Button>
-          
-          <p className="text-xs text-muted-foreground tracking-wide">
-            PRIVATE BY DEFAULT // NO SHARING
-          </p>
         </div>
-        <InterfaceOverlay isActive={overlayEnabled} currentPage="/" />
       </div>
     );
   }
@@ -192,7 +203,7 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1">
-          <p className="text-[10px] text-muted-foreground tracking-widest uppercase px-4 mb-2">CHANNELS</p>
+          <p className="text-[10px] text-muted-foreground tracking-widest uppercase px-4 mb-2">FOREST SYSTEMS</p>
           {navItems.map((item) => (
             <NavLink key={item.href} {...item} />
           ))}
