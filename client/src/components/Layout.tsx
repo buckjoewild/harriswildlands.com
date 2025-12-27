@@ -34,6 +34,7 @@ import { useTheme, ThemeMode } from "./ThemeProvider";
 import { InterfaceOverlay } from "./InterfaceOverlay";
 import { BotanicalCorner } from "./BotanicalMotifs";
 import { DemoBanner } from "./DemoBanner";
+import CoreImagery from "@/lib/coreImagery";
 
 interface LayoutProps {
   children: ReactNode;
@@ -113,8 +114,8 @@ export function Layout({ children }: LayoutProps) {
     return (
       <div className="min-h-screen relative overflow-hidden bg-black">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/attached_assets/harriswildlands2_1766828428460.webp')" }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50"
+          style={{ backgroundImage: `url(${CoreImagery.bruceopsNew})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/85" />
         

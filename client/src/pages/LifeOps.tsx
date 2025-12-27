@@ -79,7 +79,7 @@ export default function LifeOps() {
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-40"
           style={{ 
-            backgroundImage: `url(${LaneBg.root})`,
+            backgroundImage: `url(${LaneBg.root2})`,
             backgroundPosition: "center 30%"
           }}
         />
