@@ -1,13 +1,10 @@
 import { db } from "./db";
 import {
   logs, ideas, teachingRequests, harrisContent, settings, goals, checkins, driftFlags, transcripts,
-  familyMembers, familyDrifts, familyReports,
   type InsertLog, type InsertIdea, type InsertTeachingRequest, type InsertHarrisContent,
   type InsertGoal, type InsertCheckin, type InsertTranscript,
-  type InsertFamilyMember, type InsertFamilyDrift, type InsertFamilyReport,
   type Log, type Idea, type TeachingRequest, type HarrisContent, type Setting,
-  type Goal, type Checkin, type DriftFlag, type Transcript, type TranscriptPatterns, type TranscriptScorecard,
-  type FamilyMember, type FamilyDrift, type FamilyReport
+  type Goal, type Checkin, type DriftFlag, type Transcript, type TranscriptPatterns, type TranscriptScorecard
 } from "@shared/schema";
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
 
@@ -63,28 +60,6 @@ export interface IStorage {
   updateTranscript(userId: string, id: number, updates: Partial<Transcript>): Promise<Transcript>;
   deleteTranscript(userId: string, id: number): Promise<boolean>;
   getTranscriptStats(userId: string): Promise<{ total: number; analyzed: number; totalWords: number; topThemes: any[] }>;
-  
-  // Family Members (user-scoped)
-  getFamilyMembers(userId: string): Promise<FamilyMember[]>;
-  getFamilyMember(userId: string, id: number): Promise<FamilyMember | undefined>;
-  createFamilyMember(userId: string, member: InsertFamilyMember): Promise<FamilyMember>;
-  updateFamilyMember(userId: string, id: number, updates: Partial<FamilyMember>): Promise<FamilyMember>;
-  deleteFamilyMember(userId: string, id: number): Promise<boolean>;
-  
-  // Family Drifts (user-scoped)
-  getFamilyDrifts(userId: string): Promise<FamilyDrift[]>;
-  getActiveFamilyDrifts(userId: string): Promise<FamilyDrift[]>;
-  createFamilyDrift(userId: string, drift: InsertFamilyDrift): Promise<FamilyDrift>;
-  acknowledgeFamilyDrift(userId: string, id: number): Promise<FamilyDrift>;
-  resolveFamilyDrift(userId: string, id: number): Promise<FamilyDrift>;
-  
-  // Family Reports (user-scoped)
-  getFamilyReports(userId: string): Promise<FamilyReport[]>;
-  createFamilyReport(userId: string, report: InsertFamilyReport): Promise<FamilyReport>;
-  getLatestFamilyReport(userId: string): Promise<FamilyReport | undefined>;
-  
-  // Family Analytics
-  getFamilyStats(userId: string): Promise<{ memberCount: number; activeDrifts: number; weeklyCompletionRate: number; lastReportDate: string | null }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -429,120 +404,6 @@ export class DatabaseStorage implements IStorage {
       analyzed: analyzed.length,
       totalWords,
       topThemes
-    };
-  }
-
-  // -------------------- FAMILY MEMBERS (USER-SCOPED) --------------------
-  
-  async getFamilyMembers(userId: string): Promise<FamilyMember[]> {
-    return await db.select().from(familyMembers)
-      .where(eq(familyMembers.userId, userId))
-      .orderBy(desc(familyMembers.createdAt));
-  }
-
-  async getFamilyMember(userId: string, id: number): Promise<FamilyMember | undefined> {
-    const [member] = await db.select().from(familyMembers)
-      .where(and(eq(familyMembers.id, id), eq(familyMembers.userId, userId)));
-    return member;
-  }
-
-  async createFamilyMember(userId: string, member: InsertFamilyMember): Promise<FamilyMember> {
-    const [newMember] = await db.insert(familyMembers).values({ ...member, userId }).returning();
-    return newMember;
-  }
-
-  async updateFamilyMember(userId: string, id: number, updates: Partial<FamilyMember>): Promise<FamilyMember> {
-    const { userId: _, ...safeUpdates } = updates as any;
-    const [updated] = await db.update(familyMembers)
-      .set(safeUpdates)
-      .where(and(eq(familyMembers.id, id), eq(familyMembers.userId, userId)))
-      .returning();
-    return updated;
-  }
-
-  async deleteFamilyMember(userId: string, id: number): Promise<boolean> {
-    await db.update(familyMembers)
-      .set({ active: false })
-      .where(and(eq(familyMembers.id, id), eq(familyMembers.userId, userId)));
-    return true;
-  }
-
-  // -------------------- FAMILY DRIFTS (USER-SCOPED) --------------------
-  
-  async getFamilyDrifts(userId: string): Promise<FamilyDrift[]> {
-    return await db.select().from(familyDrifts)
-      .where(eq(familyDrifts.userId, userId))
-      .orderBy(desc(familyDrifts.detectedAt));
-  }
-
-  async getActiveFamilyDrifts(userId: string): Promise<FamilyDrift[]> {
-    return await db.select().from(familyDrifts)
-      .where(and(
-        eq(familyDrifts.userId, userId),
-        eq(familyDrifts.acknowledged, false)
-      ))
-      .orderBy(desc(familyDrifts.detectedAt));
-  }
-
-  async createFamilyDrift(userId: string, drift: InsertFamilyDrift): Promise<FamilyDrift> {
-    const [newDrift] = await db.insert(familyDrifts).values({ ...drift, userId }).returning();
-    return newDrift;
-  }
-
-  async acknowledgeFamilyDrift(userId: string, id: number): Promise<FamilyDrift> {
-    const [updated] = await db.update(familyDrifts)
-      .set({ acknowledged: true })
-      .where(and(eq(familyDrifts.id, id), eq(familyDrifts.userId, userId)))
-      .returning();
-    return updated;
-  }
-
-  async resolveFamilyDrift(userId: string, id: number): Promise<FamilyDrift> {
-    const [updated] = await db.update(familyDrifts)
-      .set({ acknowledged: true, resolvedAt: new Date() })
-      .where(and(eq(familyDrifts.id, id), eq(familyDrifts.userId, userId)))
-      .returning();
-    return updated;
-  }
-
-  // -------------------- FAMILY REPORTS (USER-SCOPED) --------------------
-  
-  async getFamilyReports(userId: string): Promise<FamilyReport[]> {
-    return await db.select().from(familyReports)
-      .where(eq(familyReports.userId, userId))
-      .orderBy(desc(familyReports.createdAt));
-  }
-
-  async createFamilyReport(userId: string, report: InsertFamilyReport): Promise<FamilyReport> {
-    const [newReport] = await db.insert(familyReports).values({ ...report, userId }).returning();
-    return newReport;
-  }
-
-  async getLatestFamilyReport(userId: string): Promise<FamilyReport | undefined> {
-    const [report] = await db.select().from(familyReports)
-      .where(eq(familyReports.userId, userId))
-      .orderBy(desc(familyReports.createdAt))
-      .limit(1);
-    return report;
-  }
-
-  // -------------------- FAMILY ANALYTICS --------------------
-  
-  async getFamilyStats(userId: string): Promise<{ memberCount: number; activeDrifts: number; weeklyCompletionRate: number; lastReportDate: string | null }> {
-    const members = await this.getFamilyMembers(userId);
-    const activeMembers = members.filter(m => m.active);
-    
-    const activeDrifts = await this.getActiveFamilyDrifts(userId);
-    
-    const weeklyReview = await this.getWeeklyReview(userId);
-    
-    const latestReport = await this.getLatestFamilyReport(userId);
-    
-    return {
-      memberCount: activeMembers.length,
-      activeDrifts: activeDrifts.length,
-      weeklyCompletionRate: weeklyReview.stats.completionRate || 0,
-      lastReportDate: latestReport?.weekEnd || null
     };
   }
 }
