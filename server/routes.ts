@@ -144,6 +144,9 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // ==================== HEALTH CHECK (NO AUTH) ====================
+  const isStandalone = process.env.STANDALONE_MODE === "true" || 
+    (!process.env.REPL_ID && !process.env.ISSUER_URL);
+  
   app.get("/api/health", async (_req, res) => {
     const dbStatus = await checkDatabaseConnection();
     res.json({ 
@@ -151,8 +154,8 @@ export async function registerRoutes(
       timestamp: new Date().toISOString(),
       version: "1.0.0",
       environment: process.env.NODE_ENV || "development",
+      standalone_mode: isStandalone,
       database: dbStatus,
-      demo_mode: false,
       ai_provider: getActiveAIProvider(),
       ai_status: getAIStatus()
     });
@@ -522,9 +525,19 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
   });
 
   // ==================== GOOGLE DRIVE ====================
+  // Disabled in standalone mode (requires Replit connector)
   
+  const driveDisabledResponse = { 
+    error: "Google Drive sync is not available in standalone mode",
+    standalone_mode: true,
+    suggestion: "Use the data export feature (/api/export/data) for backups"
+  };
+
   // List files from Google Drive
   app.get("/api/drive/files", isAuthenticated, async (req, res) => {
+    if (isStandalone) {
+      return res.status(503).json(driveDisabledResponse);
+    }
     try {
       const { listDriveFiles } = await import("./google-drive");
       const query = req.query.q as string | undefined;
@@ -538,6 +551,9 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
 
   // Upload file to Google Drive
   app.post("/api/drive/upload", isAuthenticated, async (req, res) => {
+    if (isStandalone) {
+      return res.status(503).json(driveDisabledResponse);
+    }
     try {
       const { uploadToDrive } = await import("./google-drive");
       const { name, content, mimeType } = req.body;
@@ -554,6 +570,9 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
 
   // Download file from Google Drive
   app.get("/api/drive/download/:fileId", isAuthenticated, async (req, res) => {
+    if (isStandalone) {
+      return res.status(503).json(driveDisabledResponse);
+    }
     try {
       const { downloadFromDrive } = await import("./google-drive");
       const content = await downloadFromDrive(req.params.fileId);
@@ -566,6 +585,9 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
 
   // Create folder in Google Drive
   app.post("/api/drive/folder", isAuthenticated, async (req, res) => {
+    if (isStandalone) {
+      return res.status(503).json(driveDisabledResponse);
+    }
     try {
       const { createDriveFolder } = await import("./google-drive");
       const { name } = req.body;

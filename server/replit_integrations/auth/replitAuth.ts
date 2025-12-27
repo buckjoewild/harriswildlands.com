@@ -13,6 +13,24 @@ const isReplitEnvironment = () => {
   return !!process.env.REPL_ID && !!process.env.ISSUER_URL;
 };
 
+// Check if running in standalone mode (explicit or inferred)
+const isStandaloneMode = () => {
+  return process.env.STANDALONE_MODE === "true" || !isReplitEnvironment();
+};
+
+// Standalone user for self-hosted deployments
+const STANDALONE_USER = {
+  claims: {
+    sub: "standalone-user",
+    email: "user@localhost",
+    first_name: "Local",
+    last_name: "User",
+    profile_image_url: null,
+  },
+  access_token: "standalone-token",
+  expires_at: Math.floor(Date.now() / 1000) + 86400 * 365, // 1 year
+};
+
 const getOidcConfig = memoize(
   async () => {
     if (!isReplitEnvironment()) {
@@ -91,27 +109,46 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  if (!isReplitEnvironment()) {
+  if (isStandaloneMode()) {
     console.log("===========================================");
-    console.log("STANDALONE MODE: Replit Auth not available");
-    console.log("Use ?demo=true for demo mode access");
+    console.log("STANDALONE MODE ACTIVE");
+    console.log("Auto-login enabled - no authentication required");
+    console.log("All data stored under 'standalone-user'");
     console.log("===========================================");
     
-    app.get("/api/login", (_req, res) => {
-      res.status(503).json({ 
-        message: "Standalone mode: Use demo mode (?demo=true) or configure alternate auth",
-        standaloneMode: true
+    // Upsert the standalone user into the database
+    try {
+      await authStorage.upsertUser({
+        id: STANDALONE_USER.claims.sub,
+        email: STANDALONE_USER.claims.email,
+        firstName: STANDALONE_USER.claims.first_name,
+        lastName: STANDALONE_USER.claims.last_name,
+        profileImageUrl: STANDALONE_USER.claims.profile_image_url,
       });
+    } catch (e) {
+      console.log("Note: Could not upsert standalone user (database may not be ready)");
+    }
+
+    // Auto-login middleware: inject standalone user into every request
+    app.use((req, _res, next) => {
+      if (!req.user) {
+        req.user = STANDALONE_USER;
+        // @ts-ignore - standalone mode doesn't need proper type predicate
+        req.isAuthenticated = () => true;
+      }
+      next();
+    });
+
+    app.get("/api/login", (_req, res) => {
+      res.redirect("/");
     });
 
     app.get("/api/callback", (_req, res) => {
-      res.redirect("/?demo=true");
+      res.redirect("/");
     });
 
-    app.get("/api/logout", (req, res) => {
-      req.logout(() => {
-        res.redirect("/");
-      });
+    app.get("/api/logout", (_req, res) => {
+      res.redirect("/");
     });
 
     passport.serializeUser((user: Express.User, cb) => cb(null, user));
@@ -183,6 +220,14 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // In standalone mode, user is always authenticated
+  if (isStandaloneMode()) {
+    if (!req.user) {
+      req.user = STANDALONE_USER;
+    }
+    return next();
+  }
+
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user?.expires_at) {
