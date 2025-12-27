@@ -374,3 +374,228 @@ export function useDeleteTranscript() {
     }
   });
 }
+
+// ==========================================
+// FAMILY STEWARD
+// ==========================================
+
+export function useFamilyMembers() {
+  return useQuery({
+    queryKey: ["/api/family/members"],
+    queryFn: async () => {
+      if (isDemoMode()) {
+        return [
+          { id: 1, name: "Bruce", role: "parent", active: true },
+          { id: 2, name: "Demo Kid", role: "kid", active: true }
+        ];
+      }
+      const res = await fetch("/api/family/members");
+      if (!res.ok) throw new Error("Failed to fetch family members");
+      return await res.json();
+    },
+  });
+}
+
+export function useFamilyStats() {
+  return useQuery({
+    queryKey: ["/api/family/stats"],
+    queryFn: async () => {
+      if (isDemoMode()) {
+        return { memberCount: 2, activeDrifts: 0, weeklyCompletionRate: 75, lastReportDate: null };
+      }
+      const res = await fetch("/api/family/stats");
+      if (!res.ok) throw new Error("Failed to fetch family stats");
+      return await res.json();
+    },
+  });
+}
+
+export function useFamilyDrifts(activeOnly: boolean = false) {
+  return useQuery({
+    queryKey: ["/api/family/drifts", activeOnly],
+    queryFn: async () => {
+      if (isDemoMode()) {
+        return [];
+      }
+      const url = activeOnly ? "/api/family/drifts?active=true" : "/api/family/drifts";
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch family drifts");
+      return await res.json();
+    },
+  });
+}
+
+export function useFamilyReports() {
+  return useQuery({
+    queryKey: ["/api/family/reports"],
+    queryFn: async () => {
+      if (isDemoMode()) {
+        return [];
+      }
+      const res = await fetch("/api/family/reports");
+      if (!res.ok) throw new Error("Failed to fetch family reports");
+      return await res.json();
+    },
+  });
+}
+
+export function useCreateFamilyMember() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (data: { name: string; role: string; birthDate?: string; privateSettings?: any }) => {
+      if (isDemoMode()) {
+        return { id: Date.now(), ...data, active: true };
+      }
+      const res = await fetch("/api/family/members", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to add family member");
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/family/members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/family/stats"] });
+      toast({ title: "Family Member Added" });
+    },
+    onError: (err) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  });
+}
+
+export function useDeleteFamilyMember() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (id: number) => {
+      if (isDemoMode()) {
+        return { success: true };
+      }
+      const res = await fetch(`/api/family/members/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to remove family member");
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/family/members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/family/stats"] });
+      toast({ title: "Family Member Removed" });
+    },
+    onError: (err) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  });
+}
+
+export function useAnalyzeFamilyDrifts() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async () => {
+      if (isDemoMode()) {
+        return { drifts: [], summary: "Demo mode - no analysis available", topPriority: null };
+      }
+      const res = await fetch("/api/family/analyze", {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to analyze family drifts");
+      }
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/family/drifts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/family/stats"] });
+      const driftCount = data.drifts?.length || 0;
+      toast({ 
+        title: "Analysis Complete", 
+        description: driftCount > 0 
+          ? `Found ${driftCount} drift${driftCount > 1 ? 's' : ''} requiring attention.`
+          : "No significant drifts detected."
+      });
+    },
+    onError: (err) => {
+      toast({ title: "Analysis Failed", description: err.message, variant: "destructive" });
+    }
+  });
+}
+
+export function useAcknowledgeDrift() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: number) => {
+      if (isDemoMode()) {
+        return { id, acknowledged: true };
+      }
+      const res = await fetch(`/api/family/drifts/${id}/acknowledge`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to acknowledge drift");
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/family/drifts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/family/stats"] });
+    }
+  });
+}
+
+export function useResolveDrift() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (id: number) => {
+      if (isDemoMode()) {
+        return { id, acknowledged: true, resolvedAt: new Date().toISOString() };
+      }
+      const res = await fetch(`/api/family/drifts/${id}/resolve`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to resolve drift");
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/family/drifts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/family/stats"] });
+      toast({ title: "Drift Resolved" });
+    }
+  });
+}
+
+export function useGenerateFamilyReport() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async () => {
+      if (isDemoMode()) {
+        return { id: Date.now(), summary: "Demo weekly report", highlights: [], suggestedActivities: [] };
+      }
+      const res = await fetch("/api/family/reports/generate", {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to generate report");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/family/reports"] });
+      toast({ title: "Weekly Report Generated", description: "Your family report is ready." });
+    },
+    onError: (err) => {
+      toast({ title: "Report Generation Failed", description: err.message, variant: "destructive" });
+    }
+  });
+}

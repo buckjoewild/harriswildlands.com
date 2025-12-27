@@ -589,12 +589,271 @@ Be concise and extract only meaningful patterns. Limit each category to top 5 it
     res.json({ success: true });
   });
 
+  // ==================== FAMILY STEWARD ====================
+  
+  // Family Members CRUD
+  app.get("/api/family/members", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const members = await storage.getFamilyMembers(userId);
+    res.json(members);
+  });
+
+  app.post("/api/family/members", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const member = await storage.createFamilyMember(userId, req.body);
+    res.json(member);
+  });
+
+  app.patch("/api/family/members/:id", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const member = await storage.updateFamilyMember(userId, parseInt(req.params.id), req.body);
+    res.json(member);
+  });
+
+  app.delete("/api/family/members/:id", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    await storage.deleteFamilyMember(userId, parseInt(req.params.id));
+    res.json({ success: true });
+  });
+
+  // Family Drifts
+  app.get("/api/family/drifts", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const active = req.query.active === "true";
+    const drifts = active 
+      ? await storage.getActiveFamilyDrifts(userId)
+      : await storage.getFamilyDrifts(userId);
+    res.json(drifts);
+  });
+
+  app.post("/api/family/drifts/:id/acknowledge", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const drift = await storage.acknowledgeFamilyDrift(userId, parseInt(req.params.id));
+    res.json(drift);
+  });
+
+  app.post("/api/family/drifts/:id/resolve", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const drift = await storage.resolveFamilyDrift(userId, parseInt(req.params.id));
+    res.json(drift);
+  });
+
+  // Family Stats
+  app.get("/api/family/stats", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const stats = await storage.getFamilyStats(userId);
+    res.json(stats);
+  });
+
+  // Family Reports
+  app.get("/api/family/reports", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const reports = await storage.getFamilyReports(userId);
+    res.json(reports);
+  });
+
+  app.get("/api/family/reports/latest", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const report = await storage.getLatestFamilyReport(userId);
+    res.json(report || null);
+  });
+
+  // Run drift analysis on family data
+  app.post("/api/family/analyze", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    
+    // Gather family data
+    const [members, logs, goals, checkins, weeklyReview] = await Promise.all([
+      storage.getFamilyMembers(userId),
+      storage.getLogs(userId),
+      storage.getGoals(userId),
+      storage.getCheckins(userId),
+      storage.getWeeklyReview(userId)
+    ]);
+
+    const activeMembers = members.filter(m => m.active);
+    const recentLogs = logs.slice(0, 14); // Last 14 days
+    
+    // Build context for AI analysis
+    const analysisData = {
+      familySize: activeMembers.length,
+      memberRoles: activeMembers.map(m => ({ name: m.name, role: m.role })),
+      recentLogs: recentLogs.map(l => ({
+        date: l.date,
+        energy: l.energy,
+        mood: l.mood,
+        connection: l.connection,
+        topWin: l.topWin,
+        topFriction: l.topFriction
+      })),
+      weeklyStats: weeklyReview.stats,
+      existingDriftFlags: weeklyReview.driftFlags,
+      goals: goals.filter(g => g.status === 'active').map(g => ({ domain: g.domain, title: g.title }))
+    };
+
+    const analysisPrompt = `Analyze this family system data and detect drifts. Return a JSON object with:
+{
+  "drifts": [
+    {
+      "driftType": "low_energy|missed_checkins|pattern_break|domain_neglect|overload|connection_gap",
+      "severity": "low|medium|high",
+      "sentence": "Factual observation (no speculation)",
+      "context": { "dataPoints": ["specific data"], "timeframe": "date range", "triggers": ["potential causes"] },
+      "suggestions": [
+        { "activity": "Bond-strengthening activity", "rationale": "Why this helps", "effort": "low|medium|high" }
+      ]
+    }
+  ],
+  "weekSummary": "One paragraph factual summary of family patterns this week",
+  "topPriority": "Single most important thing to address"
+}
+
+DATA:
+${JSON.stringify(analysisData, null, 2)}`;
+
+    const lanePrompt = `You are the Family Steward AI for BruceOps. 
+Your role is to detect drifts (patterns requiring attention) in family systems.
+RULES:
+- Only state FACTUAL observations based on the data provided
+- Never speculate about emotions or motivations you can't observe
+- Suggestions should be practical, bond-strengthening activities
+- Focus on patterns that could be addressed with simple family activities
+- Consider completion rates: if <40%, suggest family walks or simple shared activities`;
+
+    try {
+      const aiResponse = await callAI(analysisPrompt, lanePrompt);
+      
+      let analysisResult;
+      try {
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          analysisResult = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("No JSON found in response");
+        }
+      } catch (parseError) {
+        return res.status(500).json({ error: "Failed to parse AI analysis", raw: aiResponse });
+      }
+
+      // Create drift records for each detected drift
+      const createdDrifts = [];
+      for (const drift of analysisResult.drifts || []) {
+        const created = await storage.createFamilyDrift(userId, {
+          driftType: drift.driftType,
+          severity: drift.severity,
+          sentence: drift.sentence,
+          context: drift.context,
+          suggestions: drift.suggestions,
+          memberId: null // family-wide drift
+        });
+        createdDrifts.push(created);
+      }
+
+      res.json({
+        drifts: createdDrifts,
+        summary: analysisResult.weekSummary,
+        topPriority: analysisResult.topPriority,
+        analyzedAt: new Date().toISOString()
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Analysis failed" });
+    }
+  });
+
+  // Generate weekly family report
+  app.post("/api/family/reports/generate", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    
+    const today = new Date();
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    const weekStart = weekAgo.toISOString().split('T')[0];
+    const weekEnd = today.toISOString().split('T')[0];
+
+    // Gather data for report
+    const [members, drifts, weeklyReview, logs] = await Promise.all([
+      storage.getFamilyMembers(userId),
+      storage.getFamilyDrifts(userId),
+      storage.getWeeklyReview(userId),
+      storage.getLogs(userId)
+    ]);
+
+    const weekDrifts = drifts.filter(d => {
+      const detectedDate = d.detectedAt?.toISOString().split('T')[0];
+      return detectedDate && detectedDate >= weekStart && detectedDate <= weekEnd;
+    });
+
+    const recentLogs = logs.filter(l => l.date >= weekStart && l.date <= weekEnd);
+    const avgEnergy = recentLogs.length > 0 
+      ? Math.round(recentLogs.reduce((sum, l) => sum + (l.energy || 0), 0) / recentLogs.length)
+      : 0;
+    const avgConnection = recentLogs.length > 0
+      ? Math.round(recentLogs.reduce((sum, l) => sum + (l.connection || 0), 0) / recentLogs.length)
+      : 0;
+
+    const reportPrompt = `Generate a weekly family report summary. Return JSON:
+{
+  "summary": "2-3 sentence factual summary of the family's week",
+  "highlights": [
+    { "category": "win|challenge|pattern", "text": "observation", "sentiment": "positive|neutral|needs-attention" }
+  ],
+  "suggestedActivities": [
+    { "activity": "Specific activity", "rationale": "Why now", "effort": "low|medium|high" }
+  ]
+}
+
+DATA:
+- Week: ${weekStart} to ${weekEnd}
+- Family members: ${members.filter(m => m.active).length}
+- Completion rate: ${weeklyReview.stats.completionRate}%
+- Average energy: ${avgEnergy}/10
+- Average connection: ${avgConnection}/10
+- Drifts detected: ${weekDrifts.length}
+- Drift types: ${Array.from(new Set(weekDrifts.map(d => d.driftType))).join(', ') || 'none'}`;
+
+    try {
+      const aiResponse = await callAI(reportPrompt, `You are generating a factual weekly family report. Be encouraging but honest. Focus on patterns, not judgments.`);
+      
+      let reportData;
+      try {
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          reportData = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("No JSON found");
+        }
+      } catch (parseError) {
+        return res.status(500).json({ error: "Failed to parse report", raw: aiResponse });
+      }
+
+      const report = await storage.createFamilyReport(userId, {
+        weekStart,
+        weekEnd,
+        summary: reportData.summary,
+        highlights: reportData.highlights,
+        driftsDetected: weekDrifts,
+        suggestedActivities: reportData.suggestedActivities,
+        stats: {
+          completionRate: weeklyReview.stats.completionRate,
+          avgEnergy,
+          avgConnection,
+          driftsCount: weekDrifts.length
+        }
+      });
+
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Report generation failed" });
+    }
+  });
+
   // ==================== DATA EXPORT ====================
   
   app.get("/api/export/data", isAuthenticated, async (req, res) => {
     const userId = getUserId(req);
     
-    const [logs, ideas, goals, checkins, teaching, harris, settings, transcripts] = await Promise.all([
+    const [logs, ideas, goals, checkins, teaching, harris, settings, transcripts, familyMembers, familyDrifts, familyReports] = await Promise.all([
       storage.getLogs(userId),
       storage.getIdeas(userId),
       storage.getGoals(userId),
@@ -603,11 +862,14 @@ Be concise and extract only meaningful patterns. Limit each category to top 5 it
       storage.getHarrisContent(userId),
       storage.getSettings(),
       storage.getTranscripts(userId),
+      storage.getFamilyMembers(userId),
+      storage.getFamilyDrifts(userId),
+      storage.getFamilyReports(userId),
     ]);
     
     const exportData = {
       exportDate: new Date().toISOString(),
-      version: "1.0.0",
+      version: "1.1.0",
       data: {
         logs,
         ideas,
@@ -616,7 +878,12 @@ Be concise and extract only meaningful patterns. Limit each category to top 5 it
         teachingRequests: teaching,
         harrisContent: harris,
         transcripts,
-        settings
+        settings,
+        family: {
+          members: familyMembers,
+          drifts: familyDrifts,
+          reports: familyReports
+        }
       }
     };
     

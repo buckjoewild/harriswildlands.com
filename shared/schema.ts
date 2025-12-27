@@ -207,6 +207,81 @@ export const driftFlags = pgTable("drift_flags", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === FAMILY STEWARD ===
+
+// Family member roles
+export const FAMILY_ROLES = ["parent", "kid", "partner", "guardian"] as const;
+
+// Drift severity levels
+export const DRIFT_SEVERITIES = ["low", "medium", "high"] as const;
+
+// Drift types
+export const DRIFT_TYPES = ["low_energy", "missed_checkins", "pattern_break", "domain_neglect", "overload", "connection_gap"] as const;
+
+// Family Members table
+export const familyMembers = pgTable("family_members", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  
+  // Basic info
+  name: text("name").notNull(),
+  role: text("role").notNull(), // parent, kid, partner, guardian
+  birthDate: text("birth_date"), // YYYY-MM-DD optional
+  
+  // Private settings per member
+  privateSettings: jsonb("private_settings"), // { goals: [], preferences: {}, notes: "" }
+  
+  // Status
+  active: boolean("active").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Family Drifts table - detected patterns requiring attention
+export const familyDrifts = pgTable("family_drifts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  memberId: integer("member_id"), // optional - null means family-wide drift
+  
+  // Drift info
+  driftType: text("drift_type").notNull(), // low_energy, missed_checkins, pattern_break, etc.
+  severity: text("severity").default("medium"), // low, medium, high
+  
+  // Context
+  context: jsonb("context"), // { dataPoints: [], timeframe: "", triggers: [] }
+  sentence: text("sentence").notNull(), // Single factual observation
+  
+  // AI-generated suggestions
+  suggestions: jsonb("suggestions"), // [{ activity: "", rationale: "", effort: "low|medium|high" }]
+  
+  // Status tracking
+  acknowledged: boolean("acknowledged").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  
+  detectedAt: timestamp("detected_at").defaultNow(),
+});
+
+// Weekly Family Reports
+export const familyReports = pgTable("family_reports", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  
+  // Report period
+  weekStart: text("week_start").notNull(), // YYYY-MM-DD
+  weekEnd: text("week_end").notNull(), // YYYY-MM-DD
+  
+  // Report content
+  summary: text("summary"), // AI-generated weekly summary
+  highlights: jsonb("highlights"), // [{ category, text, sentiment }]
+  driftsDetected: jsonb("drifts_detected"), // snapshot of drifts for this week
+  suggestedActivities: jsonb("suggested_activities"), // bond-strengthening suggestions
+  
+  // Stats snapshot
+  stats: jsonb("stats"), // { completionRate, energyAvg, connectionScore, etc. }
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // === THINKOPS: BRAINDUMP TRANSCRIPTS ===
 
 // Pattern categories for analysis
@@ -252,6 +327,9 @@ export const insertGoalSchema = createInsertSchema(goals).omit({ id: true, userI
 export const insertCheckinSchema = createInsertSchema(checkins).omit({ id: true, userId: true, createdAt: true });
 export const insertDriftFlagSchema = createInsertSchema(driftFlags).omit({ id: true, userId: true, createdAt: true });
 export const insertTranscriptSchema = createInsertSchema(transcripts).omit({ id: true, userId: true, createdAt: true, patterns: true, topThemes: true, scorecard: true, analyzed: true, wordCount: true });
+export const insertFamilyMemberSchema = createInsertSchema(familyMembers).omit({ id: true, userId: true, createdAt: true, active: true });
+export const insertFamilyDriftSchema = createInsertSchema(familyDrifts).omit({ id: true, userId: true, detectedAt: true, acknowledged: true, resolvedAt: true });
+export const insertFamilyReportSchema = createInsertSchema(familyReports).omit({ id: true, userId: true, createdAt: true });
 
 // === TYPES ===
 
@@ -284,6 +362,15 @@ export type InsertDriftFlag = z.infer<typeof insertDriftFlagSchema>;
 
 export type Transcript = typeof transcripts.$inferSelect;
 export type InsertTranscript = z.infer<typeof insertTranscriptSchema>;
+
+export type FamilyMember = typeof familyMembers.$inferSelect;
+export type InsertFamilyMember = z.infer<typeof insertFamilyMemberSchema>;
+
+export type FamilyDrift = typeof familyDrifts.$inferSelect;
+export type InsertFamilyDrift = z.infer<typeof insertFamilyDriftSchema>;
+
+export type FamilyReport = typeof familyReports.$inferSelect;
+export type InsertFamilyReport = z.infer<typeof insertFamilyReportSchema>;
 
 // Pattern analysis types
 export type PatternItem = {
