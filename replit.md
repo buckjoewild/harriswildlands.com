@@ -69,14 +69,20 @@ Preferred communication style: Simple, everyday language.
 │   └── src/
 │       ├── components/   # UI components and layout
 │       ├── hooks/        # Custom React hooks (API, auth, etc.)
-│       ├── pages/        # Route components
+│       ├── pages/        # Route components (including new AI pages)
 │       └── lib/          # Utilities and query client
 ├── server/           # Express backend
-│   ├── routes.ts     # API handlers
+│   ├── routes.ts     # API handlers (with AI endpoints)
 │   ├── storage.ts    # Database access layer
 │   └── replit_integrations/  # Auth integration
 ├── shared/           # Shared code (schema, types, routes)
-└── docs/             # Architecture documentation
+└── docs/             # Technical documentation (Priority 1-4)
+    ├── PRIORITY1_CORE_ARCHITECTURE.md  # Server, API, Storage, Auth
+    ├── PRIORITY2_FRONTEND.md           # Pages, Components, Hooks
+    ├── PRIORITY3_CONFIG_DEPLOY.md      # Config, Docker, Env vars
+    ├── PRIORITY4_DOCS_COMPLETE.md      # Complete reference
+    ├── ARCHITECTURE.md                 # Original architecture
+    └── STANDALONE.md                   # Self-hosted deployment
 ```
 
 ### Key Design Patterns
@@ -130,3 +136,32 @@ The app supports standalone operation outside Replit:
 - `express-session` + `connect-pg-simple`: Session management
 - `passport` + `openid-client`: Authentication flow
 - `googleapis`: Google Drive API client
+- `recharts`: Data visualization for weekly review
+
+## AI-Powered Features (December 2025)
+
+### New AI Pages
+1. **Reality Check** (`/reality-check`) - Validates ideas with Known/Likely/Speculation classification and self-deception pattern detection
+2. **Weekly Review** (`/weekly-review`) - Visualizes goal completion with charts and generates AI-powered weekly insights
+3. **Bruce Steward Chat** (`/chat`) - Conversational AI interface with context-aware responses
+
+### AI Endpoints
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/ideas/:id/reality-check` | Enhanced reality check with market research |
+| `POST /api/review/weekly/insight` | Generate weekly action recommendation (cached daily) |
+| `POST /api/chat` | Conversational AI with user data context |
+
+### callAI() Function
+Unified AI caller that uses the provider ladder (Gemini -> OpenRouter -> Off) with automatic fallback. Located in `server/routes.ts`.
+
+## Technical Documentation
+
+Comprehensive documentation compiled for sharing with other AI systems:
+
+| Document | Contents |
+|----------|----------|
+| `docs/PRIORITY1_CORE_ARCHITECTURE.md` | Server, API routes, storage, auth, schemas |
+| `docs/PRIORITY2_FRONTEND.md` | Pages, components, hooks, query client |
+| `docs/PRIORITY3_CONFIG_DEPLOY.md` | Vite, Tailwind, TypeScript, Docker, env vars |
+| `docs/PRIORITY4_DOCS_COMPLETE.md` | Complete reference covering all systems |
