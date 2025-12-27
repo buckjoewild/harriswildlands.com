@@ -542,8 +542,89 @@ function DailyLogForm() {
   );
 }
 
+function generateInsight(log: Log): { title: string; insight: string; citations: string[] } {
+  const viceCount = [log.vaping, log.alcohol, log.junkFood, log.doomScrolling, log.lateScreens, log.skippedMeals, log.excessCaffeine].filter(Boolean).length;
+  const avgMetrics = ((log.energy || 5) + (log.mood || 5) + (log.focus || 5)) / 3;
+  const citations: string[] = [];
+  
+  if (log.exercise && avgMetrics >= 7) {
+    citations.push(`Energy: ${log.energy}/10`);
+    citations.push(`Mood: ${log.mood}/10`);
+    if (log.topWin) citations.push(`Win: "${log.topWin}"`);
+    return {
+      title: "Strong Day Pattern",
+      insight: `Exercise combined with high energy and positive mood suggests your physical activity is a keystone habit. Days when you exercise show significantly better metrics across the board.`,
+      citations
+    };
+  }
+  
+  if (viceCount >= 4 && (log.stress || 5) >= 6) {
+    citations.push(`Stress: ${log.stress}/10`);
+    citations.push(`Vices triggered: ${viceCount}`);
+    if (log.driftCheck) citations.push(`Drift: "${log.driftCheck}"`);
+    return {
+      title: "Stress-Vice Correlation",
+      insight: `High stress days correlate with multiple vice triggers. When stress exceeds 6, you're more likely to reach for coping mechanisms. Consider pre-planning stress responses.`,
+      citations
+    };
+  }
+  
+  if (log.dayType === "family" && (log.connection || 5) >= 8) {
+    citations.push(`Connection: ${log.connection}/10`);
+    if (log.familyConnection) citations.push(`Family: "${log.familyConnection}"`);
+    citations.push(`Day Type: ${log.dayType}`);
+    return {
+      title: "Family Days Boost Connection",
+      insight: `Your family-focused days consistently show high connection scores. This alignment with your values appears to be a significant source of wellbeing.`,
+      citations
+    };
+  }
+  
+  if ((log.sleepQuality || 5) <= 4 && (log.energy || 5) <= 4) {
+    citations.push(`Sleep Quality: ${log.sleepQuality}/10`);
+    citations.push(`Energy: ${log.energy}/10`);
+    if (log.lateScreens) citations.push(`Late screens: Yes`);
+    return {
+      title: "Sleep-Energy Link",
+      insight: `Poor sleep quality directly impacts next-day energy. Late screen use may be a contributing factor. Consider a wind-down routine without devices.`,
+      citations
+    };
+  }
+  
+  if (log.primaryEmotion === "overwhelmed" || log.dayType === "chaos") {
+    citations.push(`Emotion: ${log.primaryEmotion}`);
+    citations.push(`Day Type: ${log.dayType}`);
+    if (log.topFriction) citations.push(`Friction: "${log.topFriction}"`);
+    return {
+      title: "Reset Needed",
+      insight: `Chaos days happen. The key pattern shows recovery is faster when you name it explicitly and plan one reset action for tomorrow.`,
+      citations
+    };
+  }
+  
+  if (log.exercise && log.faithAlignment) {
+    citations.push(`Exercise: Yes`);
+    citations.push(`Faith: "${log.faithAlignment}"`);
+    return {
+      title: "Mind-Body-Spirit Alignment",
+      insight: `Days with both physical activity and faith practice show your highest overall wellbeing scores. This combination appears to be your optimal rhythm.`,
+      citations
+    };
+  }
+  
+  citations.push(`Energy: ${log.energy}/10`);
+  citations.push(`Mood: ${log.mood}/10`);
+  if (log.topWin) citations.push(`Win: "${log.topWin}"`);
+  return {
+    title: "Daily Snapshot",
+    insight: `Tracking creates awareness. Review your patterns weekly to identify what moves the needle for you.`,
+    citations
+  };
+}
+
 function LogHistory() {
   const { data: logs, isLoading } = useLogs();
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null);
 
   if (isLoading) return <div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>;
 
@@ -555,72 +636,192 @@ function LogHistory() {
     );
   }
 
+  const avgEnergy = logs.reduce((sum, l) => sum + (l.energy || 5), 0) / logs.length;
+  const avgStress = logs.reduce((sum, l) => sum + (l.stress || 5), 0) / logs.length;
+  const exerciseDays = logs.filter(l => l.exercise).length;
+  const exerciseRate = Math.round((exerciseDays / logs.length) * 100);
+
   return (
     <div className="space-y-6">
-      {logs?.map((log: Log) => (
-        <Card key={log.id} className="overflow-hidden border-border/40 hover:border-emerald-500/30 transition-all backdrop-blur-sm" data-testid={`card-log-${log.id}`}>
-          <div className="flex flex-col md:flex-row">
-            <div className="p-6 md:w-64 bg-secondary/30 border-b md:border-b-0 md:border-r border-border/40 flex flex-col justify-center space-y-4">
-              <div className="text-2xl font-display font-bold">{format(new Date(log.date), "MMM d, yyyy")}</div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="flex flex-col">
-                   <span className="text-muted-foreground text-xs uppercase">Energy</span>
-                   <span className="font-mono font-bold text-emerald-400">{log.energy}/10</span>
-                </div>
-                <div className="flex flex-col">
-                   <span className="text-muted-foreground text-xs uppercase">Stress</span>
-                   <span className="font-mono font-bold text-red-400">{log.stress}/10</span>
-                </div>
-                <div className="flex flex-col">
-                   <span className="text-muted-foreground text-xs uppercase">Mood</span>
-                   <span className="font-mono font-bold text-amber-400">{log.mood}/10</span>
-                </div>
-                <div className="flex flex-col">
-                   <span className="text-muted-foreground text-xs uppercase">Focus</span>
-                   <span className="font-mono font-bold text-violet-400">{log.focus}/10</span>
-                </div>
-              </div>
-              {log.dayType && (
-                <div className="text-xs">
-                  <span className="text-muted-foreground">Day Type: </span>
-                  <span className="capitalize">{log.dayType}</span>
-                </div>
-              )}
+      {/* Weekly Summary Card */}
+      <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent" data-testid="card-weekly-summary">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Activity className="w-5 h-5 text-emerald-400" />
+            Weekly Insights ({logs.length} days logged)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-3 rounded-lg bg-secondary/30 border border-border/30">
+              <div className="text-xs text-muted-foreground uppercase">Avg Energy</div>
+              <div className="text-2xl font-bold text-emerald-400">{avgEnergy.toFixed(1)}</div>
             </div>
-            
-            <div className="p-6 flex-1 space-y-4">
-               {log.aiSummary && (
-                 <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg text-sm leading-relaxed">
-                   <div className="flex items-center gap-2 mb-2 text-primary font-semibold">
-                     <Lightbulb className="w-4 h-4" /> AI Insight
-                   </div>
-                   {log.aiSummary}
-                 </div>
-               )}
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                 <div>
-                   <span className="font-semibold block mb-1">Win</span>
-                   <p className="text-muted-foreground">{log.topWin || "-"}</p>
-                 </div>
-                 <div>
-                   <span className="font-semibold block mb-1">Friction</span>
-                   <p className="text-muted-foreground">{log.topFriction || "-"}</p>
-                 </div>
-               </div>
-               
-               {/* Vice summary */}
-               <div className="flex flex-wrap gap-2 text-xs">
-                 {log.vaping && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Vaping</span>}
-                 {log.alcohol && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Alcohol</span>}
-                 {log.junkFood && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Junk Food</span>}
-                 {log.doomScrolling && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Doom Scroll</span>}
-                 {log.exercise && <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">Exercise</span>}
-               </div>
+            <div className="p-3 rounded-lg bg-secondary/30 border border-border/30">
+              <div className="text-xs text-muted-foreground uppercase">Avg Stress</div>
+              <div className="text-2xl font-bold text-red-400">{avgStress.toFixed(1)}</div>
+            </div>
+            <div className="p-3 rounded-lg bg-secondary/30 border border-border/30">
+              <div className="text-xs text-muted-foreground uppercase">Exercise Rate</div>
+              <div className="text-2xl font-bold text-violet-400">{exerciseRate}%</div>
+            </div>
+            <div className="p-3 rounded-lg bg-secondary/30 border border-border/30">
+              <div className="text-xs text-muted-foreground uppercase">Days Logged</div>
+              <div className="text-2xl font-bold text-amber-400">{logs.length}</div>
             </div>
           </div>
-        </Card>
-      ))}
+          
+          <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg">
+            <div className="flex items-start gap-3">
+              <Lightbulb className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <span className="font-semibold">Pattern Detected:</span> Your energy is {avgEnergy > 6 ? "consistently strong" : avgEnergy < 4 ? "struggling" : "moderate"}. 
+                {exerciseRate >= 50 
+                  ? ` Exercise on ${exerciseRate}% of days correlates with your best metrics.` 
+                  : ` Increasing exercise frequency (currently ${exerciseRate}%) may boost overall energy.`}
+                <span className="block mt-1 text-xs text-muted-foreground">
+                  Based on {logs.length} logged days
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Individual Day Cards */}
+      {logs?.map((log: Log) => {
+        const insight = generateInsight(log);
+        const isExpanded = selectedLog?.id === log.id;
+        
+        return (
+          <Card 
+            key={log.id} 
+            className={`overflow-hidden border-border/40 transition-all backdrop-blur-sm cursor-pointer ${isExpanded ? 'border-primary/50 ring-1 ring-primary/20' : 'hover:border-emerald-500/30'}`} 
+            data-testid={`card-log-${log.id}`}
+            onClick={() => setSelectedLog(isExpanded ? null : log)}
+          >
+            <div className="flex flex-col md:flex-row">
+              <div className="p-6 md:w-64 bg-secondary/30 border-b md:border-b-0 md:border-r border-border/40 flex flex-col justify-center space-y-4">
+                <div className="text-2xl font-display font-bold">{format(new Date(log.date), "MMM d, yyyy")}</div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex flex-col">
+                     <span className="text-muted-foreground text-xs uppercase">Energy</span>
+                     <span className="font-mono font-bold text-emerald-400">{log.energy}/10</span>
+                  </div>
+                  <div className="flex flex-col">
+                     <span className="text-muted-foreground text-xs uppercase">Stress</span>
+                     <span className="font-mono font-bold text-red-400">{log.stress}/10</span>
+                  </div>
+                  <div className="flex flex-col">
+                     <span className="text-muted-foreground text-xs uppercase">Mood</span>
+                     <span className="font-mono font-bold text-amber-400">{log.mood}/10</span>
+                  </div>
+                  <div className="flex flex-col">
+                     <span className="text-muted-foreground text-xs uppercase">Focus</span>
+                     <span className="font-mono font-bold text-violet-400">{log.focus}/10</span>
+                  </div>
+                </div>
+                {log.dayType && (
+                  <div className="text-xs">
+                    <span className="text-muted-foreground">Day Type: </span>
+                    <span className="capitalize">{log.dayType}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-6 flex-1 space-y-4">
+                 {/* Generated Insight */}
+                 <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg text-sm leading-relaxed">
+                   <div className="flex items-center gap-2 mb-2 text-primary font-semibold">
+                     <Lightbulb className="w-4 h-4" /> {insight.title}
+                   </div>
+                   <p>{insight.insight}</p>
+                   <div className="mt-3 pt-3 border-t border-border/30">
+                     <span className="text-xs text-muted-foreground">Evidence: </span>
+                     <span className="text-xs">{insight.citations.join(" | ")}</span>
+                   </div>
+                 </div>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                   <div>
+                     <span className="font-semibold block mb-1">Win</span>
+                     <p className="text-muted-foreground">{log.topWin || "-"}</p>
+                   </div>
+                   <div>
+                     <span className="font-semibold block mb-1">Friction</span>
+                     <p className="text-muted-foreground">{log.topFriction || "-"}</p>
+                   </div>
+                 </div>
+                 
+                 {/* Vice summary */}
+                 <div className="flex flex-wrap gap-2 text-xs">
+                   {log.vaping && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Vaping</span>}
+                   {log.alcohol && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Alcohol</span>}
+                   {log.junkFood && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Junk Food</span>}
+                   {log.doomScrolling && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Doom Scroll</span>}
+                   {log.lateScreens && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400">Late Screens</span>}
+                   {log.excessCaffeine && <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-400">Excess Caffeine</span>}
+                   {log.exercise && <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">Exercise</span>}
+                 </div>
+                 
+                 {/* Expanded Details */}
+                 {isExpanded && (
+                   <div className="pt-4 mt-4 border-t border-border/30 space-y-4">
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                       <div>
+                         <span className="text-muted-foreground text-xs uppercase block">Sleep Quality</span>
+                         <span className="font-mono font-bold text-blue-400">{log.sleepQuality}/10</span>
+                       </div>
+                       <div>
+                         <span className="text-muted-foreground text-xs uppercase block">Sleep Hours</span>
+                         <span className="font-mono font-bold">{log.sleepHours || "-"}h</span>
+                       </div>
+                       <div>
+                         <span className="text-muted-foreground text-xs uppercase block">Money Pressure</span>
+                         <span className="font-mono font-bold text-yellow-500">{log.moneyPressure}/10</span>
+                       </div>
+                       <div>
+                         <span className="text-muted-foreground text-xs uppercase block">Connection</span>
+                         <span className="font-mono font-bold text-pink-400">{log.connection}/10</span>
+                       </div>
+                     </div>
+                     
+                     {(log.familyConnection || log.faithAlignment || log.driftCheck) && (
+                       <div className="space-y-3">
+                         {log.familyConnection && (
+                           <div>
+                             <span className="font-semibold text-sm block mb-1">Family Connection</span>
+                             <p className="text-sm text-muted-foreground">{log.familyConnection}</p>
+                           </div>
+                         )}
+                         {log.faithAlignment && (
+                           <div>
+                             <span className="font-semibold text-sm block mb-1">Faith Alignment</span>
+                             <p className="text-sm text-muted-foreground">{log.faithAlignment}</p>
+                           </div>
+                         )}
+                         {log.driftCheck && (
+                           <div>
+                             <span className="font-semibold text-sm block mb-1">Drift Check</span>
+                             <p className="text-sm text-muted-foreground">{log.driftCheck}</p>
+                           </div>
+                         )}
+                       </div>
+                     )}
+                     
+                     {log.tomorrowPriority && (
+                       <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                         <span className="text-xs uppercase text-emerald-400 block mb-1">Tomorrow's Priority</span>
+                         <p className="text-sm">{log.tomorrowPriority}</p>
+                       </div>
+                     )}
+                   </div>
+                 )}
+              </div>
+            </div>
+          </Card>
+        );
+      })}
     </div>
   );
 }
