@@ -622,13 +622,83 @@ function generateInsight(log: Log): { title: string; insight: string; citations:
   };
 }
 
+const EXAMPLE_LOGS: Log[] = [
+  {
+    id: 1, date: "2025-12-21", userId: "example",
+    vaping: false, alcohol: false, junkFood: false, doomScrolling: false, lateScreens: false, skippedMeals: false, excessCaffeine: false, exercise: true,
+    energy: 8, stress: 3, mood: 9, focus: 8, sleepQuality: 8, sleepHours: 7, moneyPressure: 2, connection: 9,
+    dayType: "family", primaryEmotion: "grateful", winCategory: "family", timeDrain: "none",
+    topWin: "Quality time with kids building a fort", topFriction: "Minor work email distraction", tomorrowPriority: "Finish quarterly budget review",
+    familyConnection: "Built a blanket fort with the kids and told stories for an hour", faithAlignment: "Morning devotional felt deeply connected", driftCheck: null,
+    rawTranscript: null, aiSummary: null, createdAt: null
+  },
+  {
+    id: 2, date: "2025-12-22", userId: "example",
+    vaping: false, alcohol: true, junkFood: true, doomScrolling: true, lateScreens: true, skippedMeals: false, excessCaffeine: true, exercise: false,
+    energy: 4, stress: 8, mood: 4, focus: 3, sleepQuality: 4, sleepHours: 5, moneyPressure: 6, connection: 3,
+    dayType: "work", primaryEmotion: "anxious", winCategory: "work", timeDrain: "meetings",
+    topWin: "Closed the Henderson deal despite obstacles", topFriction: "Back-to-back meetings killed focus", tomorrowPriority: "Protect morning focus time",
+    familyConnection: null, faithAlignment: "Struggled to find peace during the day", driftCheck: "Letting work stress bleed into home time",
+    rawTranscript: null, aiSummary: null, createdAt: null
+  },
+  {
+    id: 3, date: "2025-12-23", userId: "example",
+    vaping: false, alcohol: false, junkFood: false, doomScrolling: false, lateScreens: false, skippedMeals: false, excessCaffeine: false, exercise: true,
+    energy: 6, stress: 4, mood: 7, focus: 6, sleepQuality: 7, sleepHours: 8, moneyPressure: 3, connection: 7,
+    dayType: "rest", primaryEmotion: "peaceful", winCategory: "health", timeDrain: "none",
+    topWin: "Morning run cleared my head completely", topFriction: "Tempted to check work email", tomorrowPriority: "Meal prep for the week",
+    familyConnection: "Long walk with spouse discussing 2026 goals", faithAlignment: "Journaled for 20 minutes on gratitude", driftCheck: null,
+    rawTranscript: null, aiSummary: null, createdAt: null
+  },
+  {
+    id: 4, date: "2025-12-24", userId: "example",
+    vaping: true, alcohol: false, junkFood: true, doomScrolling: false, lateScreens: false, skippedMeals: false, excessCaffeine: true, exercise: false,
+    energy: 5, stress: 5, mood: 6, focus: 5, sleepQuality: 5, sleepHours: 6, moneyPressure: 4, connection: 6,
+    dayType: "mixed", primaryEmotion: "hopeful", winCategory: "creative", timeDrain: "distractions",
+    topWin: "Finished first draft of blog post", topFriction: "Vaped twice when stressed", tomorrowPriority: "Christmas morning presence over presents",
+    familyConnection: "Wrapped gifts together as a family", faithAlignment: "Christmas Eve service was meaningful", driftCheck: "Snacking mindlessly while working",
+    rawTranscript: null, aiSummary: null, createdAt: null
+  },
+  {
+    id: 5, date: "2025-12-25", userId: "example",
+    vaping: false, alcohol: false, junkFood: false, doomScrolling: false, lateScreens: false, skippedMeals: false, excessCaffeine: false, exercise: true,
+    energy: 9, stress: 2, mood: 10, focus: 7, sleepQuality: 9, sleepHours: 8, moneyPressure: 1, connection: 10,
+    dayType: "family", primaryEmotion: "grateful", winCategory: "family", timeDrain: "none",
+    topWin: "Kids faces opening gifts - priceless", topFriction: "None - stayed fully present", tomorrowPriority: "Thank you notes with kids",
+    familyConnection: "All day with extended family, felt deeply connected", faithAlignment: "Led family prayer before dinner, felt honored", driftCheck: null,
+    rawTranscript: null, aiSummary: null, createdAt: null
+  },
+  {
+    id: 6, date: "2025-12-26", userId: "example",
+    vaping: true, alcohol: true, junkFood: true, doomScrolling: true, lateScreens: true, skippedMeals: true, excessCaffeine: true, exercise: false,
+    energy: 2, stress: 7, mood: 3, focus: 2, sleepQuality: 3, sleepHours: 4, moneyPressure: 5, connection: 4,
+    dayType: "chaos", primaryEmotion: "overwhelmed", winCategory: "none", timeDrain: "low-energy",
+    topWin: "Made it through the day", topFriction: "Everything felt hard, no energy", tomorrowPriority: "Reset with early bedtime",
+    familyConnection: "Kids noticed I was off, tried to cheer me up", faithAlignment: "Forgot to pray, felt disconnected", driftCheck: "Completely off track with all habits",
+    rawTranscript: null, aiSummary: null, createdAt: null
+  },
+  {
+    id: 7, date: "2025-12-27", userId: "example",
+    vaping: false, alcohol: false, junkFood: false, doomScrolling: false, lateScreens: false, skippedMeals: false, excessCaffeine: false, exercise: true,
+    energy: 7, stress: 4, mood: 8, focus: 7, sleepQuality: 7, sleepHours: 7, moneyPressure: 3, connection: 8,
+    dayType: "work", primaryEmotion: "hopeful", winCategory: "health", timeDrain: "interruptions",
+    topWin: "Morning workout restored my energy", topFriction: "Few interruptions broke flow", tomorrowPriority: "Weekly planning session",
+    familyConnection: "Apologized to kids for being distant yesterday", faithAlignment: "Back to morning routine, felt grounded", driftCheck: "Need to protect sleep more",
+    rawTranscript: null, aiSummary: null, createdAt: null
+  }
+];
+
 function LogHistory() {
-  const { data: logs, isLoading } = useLogs();
+  const { data: userLogs, isLoading } = useLogs();
   const [selectedLog, setSelectedLog] = useState<Log | null>(null);
+  const [showExamples, setShowExamples] = useState(true);
 
   if (isLoading) return <div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>;
 
-  if (!logs?.length) {
+  const hasUserLogs = userLogs && userLogs.length > 0;
+  const logs = hasUserLogs ? userLogs : (showExamples ? EXAMPLE_LOGS : []);
+  
+  if (!logs.length) {
     return (
       <div className="text-center py-20 border border-dashed border-border rounded-xl">
         <p className="text-muted-foreground">No logs yet. Start your daily calibration above.</p>
@@ -636,13 +706,35 @@ function LogHistory() {
     );
   }
 
-  const avgEnergy = logs.reduce((sum, l) => sum + (l.energy || 5), 0) / logs.length;
-  const avgStress = logs.reduce((sum, l) => sum + (l.stress || 5), 0) / logs.length;
-  const exerciseDays = logs.filter(l => l.exercise).length;
+  const avgEnergy = logs.reduce((sum: number, l: Log) => sum + (l.energy || 5), 0) / logs.length;
+  const avgStress = logs.reduce((sum: number, l: Log) => sum + (l.stress || 5), 0) / logs.length;
+  const exerciseDays = logs.filter((l: Log) => l.exercise).length;
   const exerciseRate = Math.round((exerciseDays / logs.length) * 100);
+  const isShowingExamples = !hasUserLogs && showExamples;
 
   return (
     <div className="space-y-6">
+      {/* Example Data Banner */}
+      {isShowingExamples && (
+        <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-500/10" data-testid="banner-example-data">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-amber-400" />
+              <span className="text-sm font-medium">Viewing Example Data</span>
+              <span className="text-xs text-muted-foreground">See how the system works with sample logs from a week of tracking</span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowExamples(false)}
+              data-testid="button-hide-examples"
+            >
+              Hide Examples
+            </Button>
+          </div>
+        </div>
+      )}
+      
       {/* Weekly Summary Card */}
       <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent" data-testid="card-weekly-summary">
         <CardHeader>

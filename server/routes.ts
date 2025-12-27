@@ -178,7 +178,7 @@ export async function registerRoutes(
     res.json({ ...stats, driftFlags });
   });
 
-  // Logs
+  // Logs - returns user's logs only (client handles empty state with examples)
   app.get(api.logs.list.path, isAuthenticated, async (req, res) => {
     const userId = getUserId(req);
     const logs = await storage.getLogs(userId);
