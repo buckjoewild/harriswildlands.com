@@ -74,7 +74,7 @@ export function Layout({ children }: LayoutProps) {
       <Link href={href}>
         <div className={cn(
           "holo-nav-item flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 cursor-pointer",
-          isActive && "active bg-emerald-500/10 border-l-2 border-emerald-500"
+          isActive && "active bg-emerald-500/15 border border-emerald-500/40"
         )}>
           <Icon className={cn(
             "w-5 h-5 transition-colors",
