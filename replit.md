@@ -76,13 +76,15 @@ Preferred communication style: Simple, everyday language.
 │   ├── storage.ts    # Database access layer
 │   └── replit_integrations/  # Auth integration
 ├── shared/           # Shared code (schema, types, routes)
-└── docs/             # Technical documentation (Priority 1-4)
-    ├── PRIORITY1_CORE_ARCHITECTURE.md  # Server, API, Storage, Auth
-    ├── PRIORITY2_FRONTEND.md           # Pages, Components, Hooks
-    ├── PRIORITY3_CONFIG_DEPLOY.md      # Config, Docker, Env vars
-    ├── PRIORITY4_DOCS_COMPLETE.md      # Complete reference
-    ├── ARCHITECTURE.md                 # Original architecture
-    └── STANDALONE.md                   # Self-hosted deployment
+├── scripts/          # Utility scripts (smoke-test.sh)
+└── docs/             # Documentation (30 files across 6 sections)
+    ├── README.md                    # Documentation index
+    ├── 00-start-here/               # Entry point (2 files)
+    ├── 10-user-guide/               # End-user docs (7 files)
+    ├── 20-operator-guide/           # Self-hosting docs (7 files)
+    ├── 30-developer-reference/      # Technical reference (7 files)
+    ├── 40-protocols-and-governance/ # Philosophy + constraints (4 files)
+    └── 50-releases-and-evidence/    # Release artifacts (3 files)
 ```
 
 ### Key Design Patterns
@@ -157,11 +159,19 @@ Unified AI caller that uses the provider ladder (Gemini -> OpenRouter -> Off) wi
 
 ## Technical Documentation
 
-Comprehensive documentation compiled for sharing with other AI systems:
+Comprehensive documentation organized by reading path (30 files across 6 sections):
 
-| Document | Contents |
-|----------|----------|
-| `docs/PRIORITY1_CORE_ARCHITECTURE.md` | Server, API routes, storage, auth, schemas |
-| `docs/PRIORITY2_FRONTEND.md` | Pages, components, hooks, query client |
-| `docs/PRIORITY3_CONFIG_DEPLOY.md` | Vite, Tailwind, TypeScript, Docker, env vars |
-| `docs/PRIORITY4_DOCS_COMPLETE.md` | Complete reference covering all systems |
+| Section | Purpose | Key Files |
+|---------|---------|-----------|
+| `docs/00-start-here/` | Entry point and terminology | Overview, Glossary |
+| `docs/10-user-guide/` | End-user documentation | Quickstart, LifeOps, ThinkOps, Weekly Review |
+| `docs/20-operator-guide/` | Self-hosting and operations | Docker, Configuration, Security, Disaster Recovery |
+| `docs/30-developer-reference/` | Technical reference | Architecture, API Routes, Schema, Auth, AI Provider |
+| `docs/40-protocols-and-governance/` | Philosophy and constraints | Lane separation, Drift signals, Privacy, Non-goals |
+| `docs/50-releases-and-evidence/` | Release artifacts | Keystone v1.0, Acceptance checklist, Changelog |
+
+**Quick links:**
+- Start here: `docs/00-start-here/00-overview-and-reading-paths.md`
+- Quickstart: `docs/10-user-guide/10-quickstart-standalone-docker.md`
+- Architecture: `docs/30-developer-reference/30-architecture-overview.md`
+- Changelog: `docs/50-releases-and-evidence/52-changelog.md`
