@@ -26,7 +26,7 @@ import { Loader2, Plus, BrainCircuit, Rocket, Archive, Lightbulb, Zap, Star, Clo
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
 import { CanopyView } from "@/components/CanopyView";
-import CoreImagery from "@/lib/coreImagery";
+import CoreImagery, { LaneBg } from "@/lib/coreImagery";
 
 type IdeaFormValues = z.infer<typeof insertIdeaSchema>;
 
@@ -72,21 +72,21 @@ export default function ThinkOps() {
       {/* Hero Header with MS-DOS Console Styling - Canopy Theme */}
       <div className="relative rounded-xl overflow-hidden mb-8">
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center opacity-40"
           style={{ 
-            backgroundImage: `url(${CoreImagery.thinkops})`,
-            backgroundPosition: "center 15%"
+            backgroundImage: `url(${LaneBg.canopy})`,
+            backgroundPosition: "center 25%"
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
         
         <div className="relative z-10 p-6 md:p-8 flex items-center justify-between gap-4">
-          <div className="bg-black/70 border border-violet-500/50 p-4 md:p-5 backdrop-blur-sm">
-            <p className="font-mono text-violet-400 text-xs mb-1">C:\CANOPY\THINKOPS&gt;</p>
+          <div className="bg-black/70 border border-violet-500/40 p-4 md:p-5 backdrop-blur-md">
+            <p className="font-mono text-violet-400/80 text-xs mb-1 tracking-wider">thinkops@canopy:~$</p>
             <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-violet-300 uppercase">
-              THINK_OPS<span className="animate-pulse">_</span>
+              THINK_OPS<span className="cursor-blink">_</span>
             </h2>
-            <p className="font-mono text-violet-400/80 text-xs mt-2 tracking-wide">
+            <p className="font-mono text-violet-400/70 text-xs mt-2 tracking-wide">
               &gt; ideas channel // from spark to shipment
             </p>
           </div>

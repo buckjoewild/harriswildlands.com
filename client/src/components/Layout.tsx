@@ -114,36 +114,42 @@ export function Layout({ children }: LayoutProps) {
       <div className="min-h-screen relative overflow-hidden bg-black">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/assets/img/root-system-v2.webp')" }}
+          style={{ backgroundImage: "url('/attached_assets/harriswildlands2_1766828428460.webp')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/85" />
         
         <div className="relative min-h-screen flex flex-col p-6">
-          <div className="bg-black/70 border border-emerald-500/50 p-4 backdrop-blur-sm max-w-md">
-            <p className="font-mono text-emerald-400 text-xs mb-1">C:\WILDLANDS&gt;</p>
+          <div className="bg-black/80 border border-emerald-500/40 p-4 backdrop-blur-md max-w-md">
+            <p className="font-mono text-emerald-400/80 text-xs mb-1 tracking-wider">C:\WILDLANDS&gt;</p>
             <h1 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-emerald-300 uppercase">
-              HARRIS_WILDLANDS<span className="animate-pulse">_</span>
+              HARRIS_WILDLANDS<span className="cursor-blink">_</span>
             </h1>
-            <p className="font-mono text-emerald-400/80 text-xs mt-2 tracking-wide">
+            <p className="font-mono text-emerald-400/70 text-xs mt-2 tracking-wide">
               &gt; faith over fear &amp; systems over skills
             </p>
           </div>
           
           <div className="flex-1 flex flex-col items-center justify-center">
-            <Button 
-              size="lg" 
-              className="bg-emerald-600/90 hover:bg-emerald-500/90 text-white border border-emerald-400/50 backdrop-blur-sm shadow-lg shadow-emerald-900/50 font-mono"
+            <button 
+              className="portal-button group relative px-8 py-4 font-mono text-lg tracking-wider uppercase"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-login"
             >
-              <User className="w-5 h-5 mr-2" />
-              ENTER_THE_WILDLANDS
-            </Button>
+              <span className="portal-button-bg" />
+              <span className="portal-button-glow" />
+              <span className="relative z-10 flex items-center gap-3 text-emerald-100">
+                <Trees className="w-5 h-5" />
+                ENTER_THE_WILDLANDS
+              </span>
+            </button>
+            <p className="font-mono text-[10px] text-emerald-400/40 mt-4 tracking-widest">
+              &gt; AUTHENTICATE TO CONTINUE
+            </p>
           </div>
           
           <div className="text-center">
-            <p className="font-mono text-xs text-emerald-200/60 tracking-widest uppercase">
-              PRIVATE BY DEFAULT // NO SHARING
+            <p className="font-mono text-[10px] text-emerald-200/50 tracking-widest uppercase">
+              PRIVATE BY DEFAULT // NO SHARING // BOTANICAL INTELLIGENCE
             </p>
           </div>
         </div>

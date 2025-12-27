@@ -3,7 +3,7 @@ import { useDashboardStats } from "@/hooks/use-bruce-ops";
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Lightbulb, GraduationCap, Trees, Sprout, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import coreBackground from "@assets/generated-image-2_(2)_1766827325280.png";
+import coreBackground from "@assets/systems2_1766828428459.webp";
 
 export default function Dashboard() {
   const { data: stats, isLoading } = useDashboardStats();
@@ -30,16 +30,16 @@ export default function Dashboard() {
   return (
     <div className="relative min-h-[calc(100vh-4rem)] -m-4 md:-m-6 lg:-m-8">
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35"
         style={{ backgroundImage: `url(${coreBackground})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background/85" />
       
       <div className="relative z-10 p-4 md:p-6 lg:p-8 flex flex-col min-h-[calc(100vh-4rem)]">
         <div className="bg-black/70 border border-cyan-500/50 p-4 backdrop-blur-sm max-w-lg mb-8">
           <p className="font-mono text-cyan-400 text-xs mb-1">C:\CORE\BRUCEOPS&gt;</p>
           <h1 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-cyan-300 uppercase">
-            BRUCE_OPS<span className="animate-pulse">_</span>
+            BRUCE_OPS<span className="cursor-blink">_</span>
           </h1>
           <p className="font-mono text-cyan-400/80 text-xs mt-2 tracking-wide">
             &gt; personal operating system // command center

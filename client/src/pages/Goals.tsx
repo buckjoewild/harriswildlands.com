@@ -26,6 +26,7 @@ import {
   Pause, Play, AlertTriangle, Download, TrendingUp,
   Church, Users, Briefcase, Heart, Wrench, Home, Lightbulb, Shield
 } from "lucide-react";
+import { LaneBg } from "@/lib/coreImagery";
 
 const domainIcons: Record<string, any> = {
   faith: Church,
@@ -86,13 +87,27 @@ export function useWeeklyReview() {
 export default function Goals() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-display font-bold flex items-center gap-2">
-            <Target className="w-6 h-6 text-primary" />
-            Goal Tracking
-          </h2>
-          <p className="text-muted-foreground text-sm">Track what matters. Stay aligned.</p>
+      {/* Hero Header with MS-DOS Console Styling - Growth Theme */}
+      <div className="relative rounded-xl overflow-hidden mb-8">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-40"
+          style={{ 
+            backgroundImage: `url(${LaneBg.forest2})`,
+            backgroundPosition: "center 30%"
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
+        
+        <div className="relative z-10 p-6 md:p-8">
+          <div className="bg-black/70 border border-emerald-500/40 p-4 md:p-5 backdrop-blur-md inline-block">
+            <p className="font-mono text-emerald-400/80 text-xs mb-1 tracking-wider">goals@growth:~$</p>
+            <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-emerald-300 uppercase">
+              GOAL_TRACKING<span className="cursor-blink">_</span>
+            </h2>
+            <p className="font-mono text-emerald-400/70 text-xs mt-2 tracking-wide">
+              &gt; track what matters // stay aligned
+            </p>
+          </div>
         </div>
       </div>
 

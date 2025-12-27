@@ -20,7 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Trees, Sparkles, LayoutTemplate, Globe, Share2, Mail, FileText, Video, Lightbulb, GraduationCap, Heart, Briefcase, Copy, Check } from "lucide-react";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
-import CoreImagery from "@/lib/coreImagery";
+import CoreImagery, { LaneBg } from "@/lib/coreImagery";
 
 type HarrisFormValues = z.infer<typeof insertHarrisContentSchema>;
 
@@ -122,26 +122,25 @@ export default function HarrisWildlands() {
 
   return (
     <div className="space-y-6">
-      {/* Hero Header with HarrisWildlands Core Imagery */}
+      {/* Hero Header with MS-DOS Console Styling - Wildlands Theme */}
       <div className="relative rounded-xl overflow-hidden mb-8">
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center opacity-40"
           style={{ 
-            backgroundImage: `url(${CoreImagery.harriswildlands})`,
-            backgroundPosition: "center 15%"
+            backgroundImage: `url(${LaneBg.harriswildlands})`,
+            backgroundPosition: "center 30%"
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
         
-        <div className="relative z-10 p-6 md:p-8 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center backdrop-blur-sm">
-            <Trees className="w-7 h-7 text-teal-400" />
-          </div>
-          <div>
-            <h2 className="text-2xl md:text-3xl font-display font-bold">Harris Wildlands</h2>
-            <p className="text-sm text-muted-foreground tracking-widest uppercase">
-              Build Channel // Brand Voice & Content
+        <div className="relative z-10 p-6 md:p-8">
+          <div className="bg-black/70 border border-emerald-500/40 p-4 md:p-5 backdrop-blur-md inline-block">
+            <p className="font-mono text-emerald-400/80 text-xs mb-1 tracking-wider">brand@wildlands:~$</p>
+            <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-emerald-300 uppercase">
+              HARRIS_WILDLANDS<span className="cursor-blink">_</span>
+            </h2>
+            <p className="font-mono text-emerald-400/70 text-xs mt-2 tracking-wide">
+              &gt; build channel // brand voice &amp; content
             </p>
           </div>
         </div>

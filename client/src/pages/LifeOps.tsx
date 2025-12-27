@@ -26,7 +26,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Loader2, Lightbulb, Activity, ChevronDown, Wine, Cigarette, Cookie, Smartphone, Moon, Coffee, UtensilsCrossed, Dumbbell } from "lucide-react";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
-import CoreImagery from "@/lib/coreImagery";
+import CoreImagery, { LaneBg } from "@/lib/coreImagery";
 
 type LogFormValues = z.infer<typeof insertLogSchema>;
 
@@ -77,21 +77,21 @@ export default function LifeOps() {
       {/* Hero Header with MS-DOS Console Styling - Root Theme */}
       <div className="relative rounded-xl overflow-hidden mb-8">
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center opacity-40"
           style={{ 
-            backgroundImage: `url(${CoreImagery.lifeops})`,
-            backgroundPosition: "center 20%"
+            backgroundImage: `url(${LaneBg.root})`,
+            backgroundPosition: "center 30%"
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
         
         <div className="relative z-10 p-6 md:p-8">
-          <div className="bg-black/70 border border-amber-700/50 p-4 md:p-6 backdrop-blur-sm inline-block">
-            <p className="font-mono text-amber-600 text-xs mb-1">C:\ROOTS\LIFEOPS&gt;</p>
-            <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-amber-500 uppercase">
-              LIFE_OPS<span className="animate-pulse">_</span>
+          <div className="bg-black/70 border border-amber-600/40 p-4 md:p-6 backdrop-blur-md inline-block">
+            <p className="font-mono text-amber-500/80 text-xs mb-1 tracking-wider">lifeops@root:~$</p>
+            <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-amber-400 uppercase">
+              LIFE_OPS<span className="cursor-blink">_</span>
             </h2>
-            <p className="font-mono text-amber-600/80 text-xs mt-3 tracking-wide">
+            <p className="font-mono text-amber-500/70 text-xs mt-3 tracking-wide">
               &gt; stewardship channel // daily calibration
             </p>
           </div>

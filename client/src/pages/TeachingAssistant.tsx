@@ -21,7 +21,7 @@ import { Loader2, GraduationCap, FileText, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
-import CoreImagery from "@/lib/coreImagery";
+import CoreImagery, { LaneBg } from "@/lib/coreImagery";
 
 type TeachingFormValues = z.infer<typeof insertTeachingRequestSchema>;
 
@@ -46,26 +46,25 @@ export default function TeachingAssistant() {
 
   return (
     <div className="space-y-6">
-      {/* Hero Header with Shared System Core Imagery (starfield map) */}
+      {/* Hero Header with MS-DOS Console Styling - Lab Theme */}
       <div className="relative rounded-xl overflow-hidden mb-8">
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center opacity-40"
           style={{ 
-            backgroundImage: `url(${CoreImagery.sharedSystem})`,
-            backgroundPosition: "center 60%"
+            backgroundImage: `url(${LaneBg.trunk})`,
+            backgroundPosition: "center 40%"
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
         
-        <div className="relative z-10 p-6 md:p-8 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center backdrop-blur-sm">
-            <GraduationCap className="w-7 h-7 text-amber-400" />
-          </div>
-          <div>
-            <h2 className="text-2xl md:text-3xl font-display font-bold">Teaching Assistant</h2>
-            <p className="text-sm text-muted-foreground tracking-widest uppercase">
-              Work Channel // Curriculum & Lesson Plans
+        <div className="relative z-10 p-6 md:p-8">
+          <div className="bg-black/70 border border-teal-500/40 p-4 md:p-5 backdrop-blur-md inline-block">
+            <p className="font-mono text-teal-400/80 text-xs mb-1 tracking-wider">lab@trunk:~$</p>
+            <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-teal-300 uppercase">
+              TEACHING_ASSISTANT<span className="cursor-blink">_</span>
+            </h2>
+            <p className="font-mono text-teal-400/70 text-xs mt-2 tracking-wide">
+              &gt; work channel // curriculum &amp; lesson plans
             </p>
           </div>
         </div>
