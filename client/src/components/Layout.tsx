@@ -52,11 +52,10 @@ export function Layout({ children }: LayoutProps) {
   const { theme, setTheme, overlayEnabled, setOverlayEnabled } = useTheme();
 
   const navItems = [
-    { href: "/", label: "Trunk", sublabel: "Command Center", icon: TreeDeciduous },
+    { href: "/", label: "Core", sublabel: "BruceOps", icon: Eye },
     { href: "/life-ops", label: "Roots", sublabel: "LifeOps", icon: Sprout },
     { href: "/goals", label: "Growth", sublabel: "Goals", icon: Target },
     { href: "/think-ops", label: "Canopy", sublabel: "ThinkOps", icon: CloudSun },
-    { href: "/bruce-ops", label: "Core", sublabel: "BruceOps", icon: Eye },
     { href: "/teaching", label: "Lab", sublabel: "Teaching", icon: Microscope },
     { href: "/harris", label: "Wildlands", sublabel: "Brand", icon: Trees },
   ];
@@ -112,44 +111,39 @@ export function Layout({ children }: LayoutProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen relative overflow-hidden">
+      <div className="min-h-screen relative overflow-hidden bg-black">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/assets/img/root-system-v2.webp')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
         
-        <div className="relative min-h-screen flex flex-col items-center justify-end pb-20 p-4">
-          <div className="max-w-md text-center space-y-6">
-            <div className="relative w-20 h-20 mx-auto">
-              <div className="absolute inset-0 rounded-full bg-emerald-500/30 blur-xl animate-pulse" />
-              <div className="relative w-full h-full rounded-full bg-black/40 backdrop-blur-md border border-emerald-500/40 flex items-center justify-center">
-                <Trees className="w-8 h-8 text-emerald-400" />
-              </div>
-            </div>
-            
-            <div className="bg-black/60 border border-emerald-500/50 p-6 backdrop-blur-sm">
-              <p className="font-mono text-emerald-400 text-sm mb-2">C:\WILDLANDS&gt;</p>
-              <h1 className="font-mono font-normal text-3xl md:text-4xl tracking-tight text-emerald-300 uppercase">
-                HARRIS_WILDLANDS<span className="animate-pulse">_</span>
-              </h1>
-              <p className="font-mono text-emerald-400/90 text-sm mt-4 tracking-wide">
-                &gt; faith over fear &amp; systems over skills
-              </p>
-            </div>
-            
+        <div className="relative min-h-screen flex flex-col p-6">
+          <div className="bg-black/70 border border-emerald-500/50 p-4 backdrop-blur-sm max-w-md">
+            <p className="font-mono text-emerald-400 text-xs mb-1">C:\WILDLANDS&gt;</p>
+            <h1 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-emerald-300 uppercase">
+              HARRIS_WILDLANDS<span className="animate-pulse">_</span>
+            </h1>
+            <p className="font-mono text-emerald-400/80 text-xs mt-2 tracking-wide">
+              &gt; faith over fear &amp; systems over skills
+            </p>
+          </div>
+          
+          <div className="flex-1 flex flex-col items-center justify-center">
             <Button 
               size="lg" 
-              className="w-full max-w-xs bg-emerald-600/90 hover:bg-emerald-500/90 text-white border border-emerald-400/50 backdrop-blur-sm shadow-lg shadow-emerald-900/50"
+              className="bg-emerald-600/90 hover:bg-emerald-500/90 text-white border border-emerald-400/50 backdrop-blur-sm shadow-lg shadow-emerald-900/50 font-mono"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-login"
             >
               <User className="w-5 h-5 mr-2" />
-              Enter the Wildlands
+              ENTER_THE_WILDLANDS
             </Button>
-            
-            <p className="text-xs text-emerald-200/60 tracking-widest uppercase">
-              Private by Default // No Sharing
+          </div>
+          
+          <div className="text-center">
+            <p className="font-mono text-xs text-emerald-200/60 tracking-widest uppercase">
+              PRIVATE BY DEFAULT // NO SHARING
             </p>
           </div>
         </div>
