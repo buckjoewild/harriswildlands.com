@@ -73,32 +73,43 @@ const PROMPT_EXAMPLES = {
 
 export default function LifeOps() {
   return (
-    <div className="space-y-6">
-      {/* Hero Header with MS-DOS Console Styling - Root Theme */}
-      <div className="relative rounded-xl overflow-hidden mb-8">
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40"
-          style={{ 
-            backgroundImage: `url(${LaneBg.root2})`,
-            backgroundPosition: "center 30%"
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
-        
-        <div className="relative z-10 p-6 md:p-8">
-          <div className="bg-black/70 border border-amber-600/40 p-4 md:p-6 backdrop-blur-md inline-block">
-            <p className="font-mono text-amber-500/80 text-xs mb-1 tracking-wider">lifeops@root:~$</p>
-            <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-amber-400 uppercase">
-              LIFE_OPS<span className="cursor-blink">_</span>
-            </h2>
-            <p className="font-mono text-amber-500/70 text-xs mt-3 tracking-wide">
-              &gt; stewardship channel // daily calibration
-            </p>
+    <div className="relative min-h-full">
+      {/* Persistent faint background */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center opacity-15 pointer-events-none"
+        style={{ 
+          backgroundImage: `url(${LaneBg.root2})`,
+          backgroundPosition: "center 30%"
+        }}
+      />
+      <div className="fixed inset-0 bg-gradient-to-b from-background/90 via-background/95 to-background pointer-events-none" />
+      
+      <div className="relative z-10 space-y-6">
+        {/* Hero Header with MS-DOS Console Styling - Root Theme */}
+        <div className="relative rounded-xl overflow-hidden mb-8">
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-40"
+            style={{ 
+              backgroundImage: `url(${LaneBg.root2})`,
+              backgroundPosition: "center 30%"
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
+          
+          <div className="relative z-10 p-6 md:p-8">
+            <div className="bg-black/70 border border-amber-600/40 p-4 md:p-6 backdrop-blur-md inline-block">
+              <p className="font-mono text-amber-500/80 text-xs mb-1 tracking-wider">lifeops@root:~$</p>
+              <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-amber-400 uppercase">
+                LIFE_OPS<span className="cursor-blink">_</span>
+              </h2>
+              <p className="font-mono text-amber-500/70 text-xs mt-3 tracking-wide">
+                &gt; stewardship channel // daily calibration
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <Tabs defaultValue="log" className="w-full">
+        <Tabs defaultValue="log" className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
           <TabsTrigger value="log" data-testid="tab-daily-log">Daily Log</TabsTrigger>
           <TabsTrigger value="history" data-testid="tab-history">History & Insights</TabsTrigger>
@@ -111,7 +122,8 @@ export default function LifeOps() {
         <TabsContent value="history" className="mt-6">
           <LogHistory />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }
