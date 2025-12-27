@@ -1,5 +1,20 @@
 # BruceOps
 
+## Project Context (Audit Summary)
+
+| Field | Value |
+|-------|-------|
+| **Project Name** | HarrisWildlands (also: BruceOps / Thought-Weaver) |
+| **Production URL** | https://harriswildlands.com |
+| **GitHub Repo** | https://github.com/buckjoewild/harriswildlands.com |
+| **Hosting** | Replit Autoscale (with Docker portability) |
+| **Auth** | Replit OIDC + PostgreSQL sessions |
+| **Database** | PostgreSQL with Drizzle ORM (Neon-backed) |
+| **Key Users** | Solo admin (faith-centered father/teacher/creator) |
+| **Privacy** | Private by default, no sharing, user-scoped data |
+| **Theme** | Botanical sci-fi terminal (MS-DOS meets forest intelligence) |
+| **Last Updated** | December 27, 2025 |
+
 ## Overview
 
 BruceOps is a modular personal operating system that consolidates four operational "lanes" into a unified web application:
@@ -10,6 +25,15 @@ BruceOps is a modular personal operating system that consolidates four operation
 4. **HarrisWildlands** - Brand content and website copy generation
 
 The application serves as a personalized AI assistant for a faith-centered father/teacher/creator, with strict privacy guardrails and a distinctive "botanical sci-fi" visual design aesthetic.
+
+### Core Philosophy
+> "Faith over fear & systems over skills"
+
+### Non-Negotiables
+- LifeOps outputs are **factual/pattern-based** - no invented context
+- ThinkOps separates **Known / Likely / Speculation** with self-deception filters
+- Teaching outputs are **standards-aligned, printable-ready, minimal prep**
+- Red-zone privacy: support "summaries only" sharing; never assume raw logs should be shared
 
 ## User Preferences
 

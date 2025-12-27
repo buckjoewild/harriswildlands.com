@@ -7,6 +7,18 @@
 
 ---
 
+## Recent Commits (December 27, 2025)
+
+```
+c76d657 Saved progress at the end of the loop
+5bb5d72 Add animated energy lines and symbols to the landing page
+ada5531 Add a persistent subtle background to the entire page
+38d4e79 Update login page background and LifeOps image
+1c3be58 Update website pages with new MS-DOS console styling and backgrounds
+```
+
+---
+
 ## 1. Database Schema (PostgreSQL with Drizzle ORM)
 
 ### Tables Implemented
@@ -146,33 +158,53 @@
 
 ---
 
-## 5. API Endpoints
+## 5. API Endpoints (Complete)
 
-```
-GET  /api/health              # System health check
-GET  /api/auth/user           # Current user
-POST /api/auth/login          # Replit OAuth redirect
-GET  /api/auth/callback       # OAuth callback
-POST /api/logout              # End session
-
-GET  /api/logs                # List user's logs
-POST /api/logs                # Create new log
-GET  /api/logs/:id            # Get specific log
-
-GET  /api/ideas               # List user's ideas
-POST /api/ideas               # Create new idea
-PATCH /api/ideas/:id          # Update idea
-
-POST /api/teaching/generate   # Generate lesson plan
-
-POST /api/harris/generate     # Generate brand content
-
-GET  /api/drive/files         # List Drive files
-POST /api/drive/upload        # Upload to Drive
-GET  /api/drive/download/:id  # Download from Drive
-
-GET  /api/export/data         # Export all user data (JSON)
-```
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/health` | No | System health check, DB status, AI provider status |
+| GET | `/api/me` | Yes | Current authenticated user profile |
+| **Dashboard** |
+| GET | `/api/dashboard/stats` | Yes | Lane summary stats, drift flags |
+| **LifeOps (Logs)** |
+| GET | `/api/logs` | Yes | List user's daily logs |
+| GET | `/api/logs/:date` | Yes | Get log by date (YYYY-MM-DD) |
+| POST | `/api/logs` | Yes | Create new daily log |
+| PUT | `/api/logs/:id` | Yes | Update existing log |
+| POST | `/api/logs/summary` | Yes | Generate AI summary for log |
+| **ThinkOps (Ideas)** |
+| GET | `/api/ideas` | Yes | List user's ideas |
+| POST | `/api/ideas` | Yes | Create new idea |
+| PUT | `/api/ideas/:id` | Yes | Update idea (status, priority, etc) |
+| POST | `/api/ideas/:id/reality-check` | Yes | Run AI reality check on idea |
+| **Teaching Assistant** |
+| GET | `/api/teaching` | Yes | List teaching requests |
+| POST | `/api/teaching` | Yes | Generate lesson plan |
+| **HarrisWildlands (Brand)** |
+| POST | `/api/harris` | Yes | Generate brand content |
+| **Goals & Check-ins** |
+| GET | `/api/goals` | Yes | List user goals |
+| POST | `/api/goals` | Yes | Create new goal |
+| PUT | `/api/goals/:id` | Yes | Update goal |
+| GET | `/api/checkins` | Yes | List check-ins |
+| POST | `/api/checkins` | Yes | Upsert check-in |
+| POST | `/api/checkins/batch` | Yes | Batch create check-ins |
+| **Weekly Review** |
+| GET | `/api/review/weekly` | Yes | Get weekly review data |
+| GET | `/api/review/weekly/pdf` | Yes | Export weekly review as PDF |
+| **Settings** |
+| GET | `/api/settings` | Yes | List user settings |
+| PUT | `/api/settings` | Yes | Update settings |
+| **Export & Drive** |
+| GET | `/api/export/data` | Yes | Export all user data (JSON) |
+| GET | `/api/drive/files` | Yes | List Google Drive files |
+| POST | `/api/drive/upload` | Yes | Upload file to Drive |
+| GET | `/api/drive/download/:fileId` | Yes | Download file from Drive |
+| POST | `/api/drive/folder` | Yes | Create Drive folder |
+| **Auth (Replit OIDC)** |
+| GET | `/api/login` | No | Initiate Replit OAuth flow |
+| GET | `/api/callback` | No | OAuth callback handler |
+| POST | `/api/logout` | Yes | End session |
 
 ---
 
@@ -184,6 +216,44 @@ AI Provider: off (configured: off)
 GET /api/health 200 {"status":"ok","database":"connected","ai_provider":"off"}
 GET /api/auth/user 401 {"message":"Unauthorized"}
 ```
+
+---
+
+## 6.1 Live Verification Evidence (December 27, 2025)
+
+### Health Endpoint Response
+```bash
+$ curl http://localhost:5000/api/health
+```
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-12-27T10:08:44.515Z",
+  "version": "1.0.0",
+  "environment": "development",
+  "database": "connected",
+  "demo_mode": false,
+  "ai_provider": "off",
+  "ai_status": "offline"
+}
+```
+
+### Database Schema Sync Output
+```bash
+$ npm run db:push
+```
+```
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/home/runner/workspace/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+[i] No changes detected
+```
+
+**Interpretation:** Schema is fully synchronized with PostgreSQL - no pending migrations.
 
 ---
 
