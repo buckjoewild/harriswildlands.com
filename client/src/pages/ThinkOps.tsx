@@ -68,17 +68,28 @@ export default function ThinkOps() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
-      {/* Hero Header with MS-DOS Console Styling - Canopy Theme */}
-      <div className="relative rounded-xl overflow-hidden mb-8">
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40"
-          style={{ 
-            backgroundImage: `url(${LaneBg.canopy})`,
-            backgroundPosition: "center 25%"
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
+    <div className="relative min-h-full">
+      {/* Persistent faint background */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center opacity-15 pointer-events-none"
+        style={{ 
+          backgroundImage: `url(${LaneBg.canopy2})`,
+          backgroundPosition: "center 30%"
+        }}
+      />
+      <div className="fixed inset-0 bg-gradient-to-b from-background/90 via-background/95 to-background pointer-events-none" />
+      
+      <div className="relative z-10 space-y-6">
+        {/* Hero Header with MS-DOS Console Styling - Canopy Theme */}
+        <div className="relative rounded-xl overflow-hidden mb-8">
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-40"
+            style={{ 
+              backgroundImage: `url(${LaneBg.canopy})`,
+              backgroundPosition: "center 25%"
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
         
         <div className="relative z-10 p-6 md:p-8 flex items-center justify-between gap-4">
           <div className="bg-black/70 border border-violet-500/40 p-4 md:p-5 backdrop-blur-md">
@@ -145,6 +156,7 @@ export default function ThinkOps() {
           <IdeaList filter="promoted" />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

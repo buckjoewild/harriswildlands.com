@@ -119,7 +119,40 @@ export function Layout({ children }: LayoutProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/85" />
         
-        <div className="relative min-h-screen flex flex-col p-6">
+        {/* Energy Lines Overlay */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Horizontal energy lines */}
+          <div className="absolute top-[20%] left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent energy-line-h" />
+          <div className="absolute top-[40%] left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent energy-line-h" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-[70%] left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent energy-line-h" style={{ animationDelay: '2s' }} />
+          
+          {/* Vertical energy lines */}
+          <div className="absolute left-[15%] top-0 h-full w-px bg-gradient-to-b from-transparent via-emerald-500/30 to-transparent energy-line-v" />
+          <div className="absolute left-[85%] top-0 h-full w-px bg-gradient-to-b from-transparent via-cyan-500/25 to-transparent energy-line-v" style={{ animationDelay: '1.5s' }} />
+          
+          {/* Corner symbols */}
+          <div className="absolute top-8 right-8 text-cyan-500/30 font-mono text-xs">
+            <div className="flex flex-col items-end gap-1">
+              <span>[SYS.ACTIVE]</span>
+              <span className="text-emerald-500/40">NODE.READY</span>
+            </div>
+          </div>
+          <div className="absolute bottom-8 left-8 text-emerald-500/25 font-mono text-[10px]">
+            <div className="flex flex-col gap-1">
+              <span>// BOTANICAL_NET</span>
+              <span className="text-cyan-500/30">// v2.0.GROWTH</span>
+            </div>
+          </div>
+          
+          {/* Floating circuit symbols */}
+          <div className="absolute top-[30%] left-[10%] w-3 h-3 border border-cyan-500/20 rounded-full animate-pulse" />
+          <div className="absolute top-[60%] right-[20%] w-2 h-2 bg-emerald-500/30 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+          <div className="absolute bottom-[25%] left-[25%] w-4 h-4 border border-emerald-500/15 rotate-45" />
+          <div className="absolute top-[15%] right-[30%] text-cyan-500/20 font-mono text-lg">+</div>
+          <div className="absolute bottom-[40%] right-[10%] text-emerald-500/15 font-mono text-lg">*</div>
+        </div>
+        
+        <div className="relative min-h-screen flex flex-col p-6 z-10">
           <div className="bg-black/80 border border-emerald-500/40 p-4 backdrop-blur-md max-w-md">
             <p className="font-mono text-emerald-400/80 text-xs mb-1 tracking-wider">C:\WILDLANDS&gt;</p>
             <h1 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-emerald-300 uppercase">
