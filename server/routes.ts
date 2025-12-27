@@ -490,12 +490,111 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
     res.send(pdfContent);
   });
 
+  // ==================== TRANSCRIPTS (THINKOPS BRAINDUMPS) ====================
+  
+  app.get("/api/transcripts", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const transcripts = await storage.getTranscripts(userId);
+    res.json(transcripts);
+  });
+
+  app.get("/api/transcripts/stats", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const stats = await storage.getTranscriptStats(userId);
+    res.json(stats);
+  });
+
+  app.get("/api/transcripts/:id", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const transcript = await storage.getTranscript(userId, parseInt(req.params.id));
+    if (!transcript) return res.status(404).json({ error: "Transcript not found" });
+    res.json(transcript);
+  });
+
+  app.post("/api/transcripts", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const { title, content, fileName, sessionDate, participants } = req.body;
+    if (!title || !content) {
+      return res.status(400).json({ error: "Title and content are required" });
+    }
+    const transcript = await storage.createTranscript(userId, {
+      title, content, fileName, sessionDate, participants
+    });
+    res.json(transcript);
+  });
+
+  app.post("/api/transcripts/:id/analyze", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const transcript = await storage.getTranscript(userId, parseInt(req.params.id));
+    if (!transcript) return res.status(404).json({ error: "Transcript not found" });
+
+    const analysisPrompt = `Analyze this brainstorming transcript and extract patterns. Return a JSON object with exactly these fields:
+{
+  "patterns": {
+    "topics": [{"text": "theme name", "count": N, "quotes": ["direct quote 1", "quote 2"]}],
+    "actions": [{"text": "action item", "count": 1, "quotes": ["context quote"]}],
+    "questions": [{"text": "question raised", "count": 1, "quotes": ["full question"]}],
+    "energy": [{"text": "high/medium/low", "count": 1, "quotes": ["indicator quote"]}],
+    "connections": [{"text": "related project/idea", "count": N, "quotes": ["reference quote"]}]
+  },
+  "topThemes": [{"theme": "name", "count": N, "quotes": ["key quote"]}],
+  "scorecard": {
+    "totalWords": ${transcript.wordCount},
+    "uniqueTopics": N,
+    "actionItems": N,
+    "questions": N,
+    "energyLevel": "high/medium/low",
+    "topTheme": "most discussed topic"
+  }
+}
+
+TRANSCRIPT:
+${transcript.content}`;
+
+    const lanePrompt = `You are analyzing brainstorming transcripts for ThinkOps pattern detection.
+Focus on identifying recurring themes, actionable ideas, open questions, and connections to other projects.
+Be concise and extract only meaningful patterns. Limit each category to top 5 items.`;
+
+    try {
+      const aiResponse = await callAI(analysisPrompt, lanePrompt);
+      
+      let analysisData;
+      try {
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          analysisData = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("No JSON found in response");
+        }
+      } catch (parseError) {
+        return res.status(500).json({ error: "Failed to parse AI analysis", raw: aiResponse });
+      }
+
+      const updated = await storage.updateTranscript(userId, transcript.id, {
+        patterns: analysisData.patterns,
+        topThemes: analysisData.topThemes,
+        scorecard: analysisData.scorecard,
+        analyzed: true
+      });
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Analysis failed" });
+    }
+  });
+
+  app.delete("/api/transcripts/:id", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    await storage.deleteTranscript(userId, parseInt(req.params.id));
+    res.json({ success: true });
+  });
+
   // ==================== DATA EXPORT ====================
   
   app.get("/api/export/data", isAuthenticated, async (req, res) => {
     const userId = getUserId(req);
     
-    const [logs, ideas, goals, checkins, teaching, harris, settings] = await Promise.all([
+    const [logs, ideas, goals, checkins, teaching, harris, settings, transcripts] = await Promise.all([
       storage.getLogs(userId),
       storage.getIdeas(userId),
       storage.getGoals(userId),
@@ -503,6 +602,7 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
       storage.getTeachingRequests(userId),
       storage.getHarrisContent(userId),
       storage.getSettings(),
+      storage.getTranscripts(userId),
     ]);
     
     const exportData = {
@@ -515,6 +615,7 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
         checkins,
         teachingRequests: teaching,
         harrisContent: harris,
+        transcripts,
         settings
       }
     };

@@ -207,6 +207,39 @@ export const driftFlags = pgTable("drift_flags", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === THINKOPS: BRAINDUMP TRANSCRIPTS ===
+
+// Pattern categories for analysis
+export const PATTERN_CATEGORIES = ["topics", "actions", "questions", "energy", "connections"] as const;
+
+// Transcripts table for voice braindumps
+export const transcripts = pgTable("transcripts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  
+  // Source info
+  title: text("title").notNull(),
+  fileName: text("file_name"),
+  content: text("content").notNull(), // Full transcript text
+  wordCount: integer("word_count").default(0),
+  
+  // Session metadata
+  sessionDate: text("session_date"), // YYYY-MM-DD when recorded
+  participants: text("participants"), // e.g., "Trey, Joe"
+  
+  // AI-extracted patterns (stored as JSONB)
+  patterns: jsonb("patterns"), // { topics: [], actions: [], questions: [], energy: [], connections: [] }
+  
+  // Summary stats
+  topThemes: jsonb("top_themes"), // [{ theme, count, quotes: [] }]
+  scorecard: jsonb("scorecard"), // { totalWords, uniqueTopics, actionItems, questions, energyLevel }
+  
+  // Processing status
+  analyzed: boolean("analyzed").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // === SCHEMAS ===
 
 export const insertLogSchema = createInsertSchema(logs).omit({ id: true, userId: true, createdAt: true, aiSummary: true });
@@ -218,6 +251,7 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({ 
 export const insertGoalSchema = createInsertSchema(goals).omit({ id: true, userId: true, createdAt: true });
 export const insertCheckinSchema = createInsertSchema(checkins).omit({ id: true, userId: true, createdAt: true });
 export const insertDriftFlagSchema = createInsertSchema(driftFlags).omit({ id: true, userId: true, createdAt: true });
+export const insertTranscriptSchema = createInsertSchema(transcripts).omit({ id: true, userId: true, createdAt: true, patterns: true, topThemes: true, scorecard: true, analyzed: true, wordCount: true });
 
 // === TYPES ===
 
@@ -247,6 +281,33 @@ export type InsertCheckin = z.infer<typeof insertCheckinSchema>;
 
 export type DriftFlag = typeof driftFlags.$inferSelect;
 export type InsertDriftFlag = z.infer<typeof insertDriftFlagSchema>;
+
+export type Transcript = typeof transcripts.$inferSelect;
+export type InsertTranscript = z.infer<typeof insertTranscriptSchema>;
+
+// Pattern analysis types
+export type PatternItem = {
+  text: string;
+  quotes: string[];
+  count: number;
+};
+
+export type TranscriptPatterns = {
+  topics: PatternItem[];
+  actions: PatternItem[];
+  questions: PatternItem[];
+  energy: PatternItem[];
+  connections: PatternItem[];
+};
+
+export type TranscriptScorecard = {
+  totalWords: number;
+  uniqueTopics: number;
+  actionItems: number;
+  questions: number;
+  energyLevel: string; // "high" | "medium" | "low"
+  topTheme: string;
+};
 
 // === API REQUEST TYPES ===
 

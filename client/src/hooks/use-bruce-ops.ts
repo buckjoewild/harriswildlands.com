@@ -260,3 +260,117 @@ export function useCreateHarrisContent() {
     }
   });
 }
+
+// ==========================================
+// TRANSCRIPTS (BRAINDUMPS)
+// ==========================================
+export function useTranscripts() {
+  return useQuery({
+    queryKey: ["/api/transcripts"],
+    queryFn: async () => {
+      if (isDemoMode()) {
+        return [];
+      }
+      const res = await fetch("/api/transcripts");
+      if (!res.ok) throw new Error("Failed to fetch transcripts");
+      return await res.json();
+    },
+  });
+}
+
+export function useTranscriptStats() {
+  return useQuery({
+    queryKey: ["/api/transcripts/stats"],
+    queryFn: async () => {
+      if (isDemoMode()) {
+        return { total: 0, analyzed: 0, totalWords: 0, topThemes: [] };
+      }
+      const res = await fetch("/api/transcripts/stats");
+      if (!res.ok) throw new Error("Failed to fetch transcript stats");
+      return await res.json();
+    },
+  });
+}
+
+export function useCreateTranscript() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (data: { title: string; content: string; fileName?: string; sessionDate?: string; participants?: string }) => {
+      if (isDemoMode()) {
+        return { id: Date.now(), ...data, wordCount: data.content.split(/\s+/).length, analyzed: false };
+      }
+      const res = await fetch("/api/transcripts", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create transcript");
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transcripts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transcripts/stats"] });
+      toast({ title: "Transcript Added", description: "Your braindump has been saved." });
+    },
+    onError: (err) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  });
+}
+
+export function useAnalyzeTranscript() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (id: number) => {
+      if (isDemoMode()) {
+        return { id, analyzed: true, patterns: {}, topThemes: [], scorecard: {} };
+      }
+      const res = await fetch(`/api/transcripts/${id}/analyze`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to analyze transcript");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transcripts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transcripts/stats"] });
+      toast({ title: "Analysis Complete", description: "Patterns have been extracted from your braindump." });
+    },
+    onError: (err) => {
+      toast({ title: "Analysis Failed", description: err.message, variant: "destructive" });
+    }
+  });
+}
+
+export function useDeleteTranscript() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (id: number) => {
+      if (isDemoMode()) {
+        return { success: true };
+      }
+      const res = await fetch(`/api/transcripts/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete transcript");
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transcripts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transcripts/stats"] });
+      toast({ title: "Transcript Deleted" });
+    },
+    onError: (err) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  });
+}

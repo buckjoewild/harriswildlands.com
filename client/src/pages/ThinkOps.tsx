@@ -5,7 +5,7 @@
    ================================================================ */
 
 import { useState } from "react";
-import { useIdeas, useCreateIdea, useUpdateIdea, useRealityCheck } from "@/hooks/use-bruce-ops";
+import { useIdeas, useCreateIdea, useUpdateIdea, useRealityCheck, useTranscripts, useTranscriptStats, useCreateTranscript, useAnalyzeTranscript, useDeleteTranscript } from "@/hooks/use-bruce-ops";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertIdeaSchema, IDEA_CATEGORIES, TIME_ESTIMATES, type Idea } from "@shared/schema";
@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, BrainCircuit, Rocket, Archive, Lightbulb, Zap, Star, Clock, Users, Target, Heart, FlaskConical, BookOpen, Home, Cross, Leaf } from "lucide-react";
+import { Loader2, Plus, BrainCircuit, Rocket, Archive, Lightbulb, Zap, Star, Clock, Users, Target, Heart, FlaskConical, BookOpen, Home, Cross, Leaf, Mic, FileText, BarChart3, Trash2, Play, Upload } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
 import { CanopyView } from "@/components/CanopyView";
@@ -125,9 +125,12 @@ export default function ThinkOps() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[700px]">
+        <TabsList className="grid w-full grid-cols-5 lg:w-[850px]">
           <TabsTrigger value="canopy" data-testid="tab-canopy">
             <Leaf className="w-4 h-4 mr-2" /> Canopy
+          </TabsTrigger>
+          <TabsTrigger value="braindumps" data-testid="tab-braindumps">
+            <Mic className="w-4 h-4 mr-2" /> Braindumps
           </TabsTrigger>
           <TabsTrigger value="capture" data-testid="tab-inbox">
             <Lightbulb className="w-4 h-4 mr-2" /> Inbox
@@ -142,6 +145,10 @@ export default function ThinkOps() {
         
         <TabsContent value="canopy" className="mt-6">
           <CanopyView />
+        </TabsContent>
+        
+        <TabsContent value="braindumps" className="mt-6">
+          <BraindumpsPanel />
         </TabsContent>
         
         <TabsContent value="capture" className="mt-6">
@@ -397,7 +404,7 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
 
   if (isLoading) return <div className="p-12 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>;
 
-  const filteredIdeas = ideas?.filter(idea => {
+  const filteredIdeas = ideas?.filter((idea: Idea) => {
     if (filter === "draft") return idea.status === "draft";
     if (filter === "reality") return idea.status === "draft" || idea.status === "parked";
     if (filter === "promoted") return idea.status === "promoted" || idea.status === "shipped";
@@ -416,7 +423,7 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {filteredIdeas.map((idea) => {
+      {filteredIdeas.map((idea: Idea) => {
         const CategoryIcon = CATEGORY_ICONS[idea.category || 'tech'] || Lightbulb;
         const categoryColor = CATEGORY_COLORS[idea.category || 'tech'] || '';
         
@@ -521,6 +528,266 @@ function IdeaList({ filter }: { filter: "draft" | "reality" | "promoted" }) {
           </CardWithBotanical>
         );
       })}
+    </div>
+  );
+}
+
+// ==========================================
+// BRAINDUMPS PANEL - Voice Transcript Analysis
+// ==========================================
+function BraindumpsPanel() {
+  const { data: transcripts, isLoading } = useTranscripts();
+  const { data: stats } = useTranscriptStats();
+  const { mutate: createTranscript, isPending: isCreating } = useCreateTranscript();
+  const { mutate: analyzeTranscript, isPending: isAnalyzing } = useAnalyzeTranscript();
+  const { mutate: deleteTranscript } = useDeleteTranscript();
+  
+  const [showUpload, setShowUpload] = useState(false);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [selectedTranscript, setSelectedTranscript] = useState<any>(null);
+
+  const handleUpload = () => {
+    if (!title.trim() || !content.trim()) return;
+    createTranscript({ title, content }, {
+      onSuccess: () => {
+        setTitle("");
+        setContent("");
+        setShowUpload(false);
+      }
+    });
+  };
+
+  if (isLoading) {
+    return <div className="p-12 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Score Summary Card - Like Starcraft post-game */}
+      <Card className="border-violet-500/30 bg-gradient-to-br from-card via-card to-violet-500/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 font-mono text-lg">
+            <BarChart3 className="w-5 h-5 text-violet-400" />
+            PATTERN SCORECARD
+          </CardTitle>
+          <CardDescription className="font-mono text-xs">Session analysis across all braindumps</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+              <div className="text-3xl font-mono font-bold text-violet-400">{stats?.total || 0}</div>
+              <div className="text-xs text-muted-foreground mt-1">Sessions</div>
+            </div>
+            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+              <div className="text-3xl font-mono font-bold text-emerald-400">{stats?.analyzed || 0}</div>
+              <div className="text-xs text-muted-foreground mt-1">Analyzed</div>
+            </div>
+            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+              <div className="text-3xl font-mono font-bold text-cyan-400">{(stats?.totalWords || 0).toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground mt-1">Total Words</div>
+            </div>
+            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+              <div className="text-3xl font-mono font-bold text-amber-400">{stats?.topThemes?.length || 0}</div>
+              <div className="text-xs text-muted-foreground mt-1">Unique Themes</div>
+            </div>
+          </div>
+
+          {/* Top Themes */}
+          {stats?.topThemes && stats.topThemes.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border/30">
+              <div className="text-xs font-mono text-muted-foreground mb-2">TOP THEMES</div>
+              <div className="flex flex-wrap gap-2">
+                {stats.topThemes.slice(0, 8).map((theme: any, i: number) => (
+                  <Badge key={i} variant="secondary" className="font-mono">
+                    {theme.theme} <span className="ml-1 text-violet-400">x{theme.count}</span>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Upload Section */}
+      <div className="flex justify-between items-center">
+        <h3 className="font-mono text-lg text-muted-foreground">Braindump Sessions</h3>
+        <Button onClick={() => setShowUpload(!showUpload)} variant={showUpload ? "secondary" : "default"} data-testid="button-upload-transcript">
+          <Upload className="w-4 h-4 mr-2" /> {showUpload ? "Cancel" : "Upload Transcript"}
+        </Button>
+      </div>
+
+      {showUpload && (
+        <Card className="border-violet-500/30">
+          <CardContent className="pt-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="transcript-title">Session Title</Label>
+              <Input 
+                id="transcript-title"
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g., Trey & Joe Brainstorm Session"
+                data-testid="input-transcript-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="transcript-content">Transcript Content</Label>
+              <Textarea 
+                id="transcript-content"
+                value={content} 
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Paste your voice transcript here..."
+                className="min-h-[200px] font-mono text-sm"
+                data-testid="input-transcript-content"
+              />
+              <p className="text-xs text-muted-foreground">
+                {content.split(/\s+/).filter(w => w.length > 0).length} words
+              </p>
+            </div>
+            <Button onClick={handleUpload} disabled={isCreating || !title.trim() || !content.trim()} className="w-full" data-testid="button-save-transcript">
+              {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileText className="w-4 h-4 mr-2" />}
+              Save Transcript
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Transcript List */}
+      {!transcripts?.length ? (
+        <div className="text-center py-12 border border-dashed border-border rounded-xl">
+          <Mic className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+          <p className="text-muted-foreground mb-2">No braindump sessions yet.</p>
+          <p className="text-xs text-muted-foreground/60">Upload a voice transcript to start finding patterns.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {transcripts.map((t: any) => (
+            <Card key={t.id} className={`border-border/30 ${selectedTranscript?.id === t.id ? 'border-violet-500' : ''}`} data-testid={`card-transcript-${t.id}`}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <CardTitle className="text-base font-display">{t.title}</CardTitle>
+                    <CardDescription className="font-mono text-xs">
+                      {t.wordCount?.toLocaleString() || 0} words
+                      {t.participants && ` | ${t.participants}`}
+                      {t.sessionDate && ` | ${t.sessionDate}`}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {t.analyzed ? (
+                      <Badge variant="secondary" className="text-emerald-400 border-emerald-500/30">Analyzed</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground">Pending</Badge>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              
+              {/* Scorecard if analyzed */}
+              {t.analyzed && t.scorecard && (
+                <CardContent className="pt-0 pb-2">
+                  <div className="grid grid-cols-4 gap-2 text-center p-3 bg-violet-500/5 rounded-lg border border-violet-500/20">
+                    <div>
+                      <div className="text-lg font-mono font-bold text-violet-400">{t.scorecard.uniqueTopics || 0}</div>
+                      <div className="text-[10px] text-muted-foreground">Topics</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-mono font-bold text-emerald-400">{t.scorecard.actionItems || 0}</div>
+                      <div className="text-[10px] text-muted-foreground">Actions</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-mono font-bold text-cyan-400">{t.scorecard.questions || 0}</div>
+                      <div className="text-[10px] text-muted-foreground">Questions</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-mono font-bold text-amber-400 uppercase">{t.scorecard.energyLevel || '-'}</div>
+                      <div className="text-[10px] text-muted-foreground">Energy</div>
+                    </div>
+                  </div>
+                  
+                  {/* Top themes from this transcript */}
+                  {t.topThemes && t.topThemes.length > 0 && (
+                    <div className="mt-3">
+                      <div className="text-[10px] font-mono text-muted-foreground mb-1">KEY THEMES</div>
+                      <div className="flex flex-wrap gap-1">
+                        {t.topThemes.slice(0, 5).map((theme: any, i: number) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            {theme.theme}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              )}
+
+              <CardFooter className="pt-2 gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setSelectedTranscript(selectedTranscript?.id === t.id ? null : t)}
+                  data-testid={`button-view-transcript-${t.id}`}
+                >
+                  <FileText className="w-3 h-3 mr-2" /> {selectedTranscript?.id === t.id ? "Hide" : "View"}
+                </Button>
+                {!t.analyzed && (
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    onClick={() => analyzeTranscript(t.id)}
+                    disabled={isAnalyzing}
+                    data-testid={`button-analyze-transcript-${t.id}`}
+                  >
+                    {isAnalyzing ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Play className="w-3 h-3 mr-2" />}
+                    Analyze Patterns
+                  </Button>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="ml-auto text-destructive"
+                  onClick={() => deleteTranscript(t.id)}
+                  data-testid={`button-delete-transcript-${t.id}`}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </CardFooter>
+
+              {/* Expanded content view */}
+              {selectedTranscript?.id === t.id && (
+                <CardContent className="pt-0 border-t border-border/30">
+                  <div className="bg-background/50 p-4 rounded-lg font-mono text-xs max-h-64 overflow-y-auto whitespace-pre-wrap">
+                    {t.content}
+                  </div>
+                  
+                  {/* Pattern details if analyzed */}
+                  {t.analyzed && t.patterns && (
+                    <div className="mt-4 space-y-3">
+                      {Object.entries(t.patterns).map(([category, items]: [string, any]) => (
+                        items && items.length > 0 && (
+                          <div key={category} className="p-3 bg-violet-500/5 rounded-lg border border-violet-500/20">
+                            <div className="text-xs font-mono font-bold text-violet-400 uppercase mb-2">{category}</div>
+                            <div className="space-y-1">
+                              {items.slice(0, 5).map((item: any, i: number) => (
+                                <div key={i} className="text-sm">
+                                  <span className="font-medium">{item.text}</span>
+                                  {item.quotes?.[0] && (
+                                    <span className="text-muted-foreground ml-2 text-xs italic">"{item.quotes[0].slice(0, 50)}..."</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

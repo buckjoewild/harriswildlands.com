@@ -1,10 +1,10 @@
 import { db } from "./db";
 import {
-  logs, ideas, teachingRequests, harrisContent, settings, goals, checkins, driftFlags,
+  logs, ideas, teachingRequests, harrisContent, settings, goals, checkins, driftFlags, transcripts,
   type InsertLog, type InsertIdea, type InsertTeachingRequest, type InsertHarrisContent,
-  type InsertGoal, type InsertCheckin,
+  type InsertGoal, type InsertCheckin, type InsertTranscript,
   type Log, type Idea, type TeachingRequest, type HarrisContent, type Setting,
-  type Goal, type Checkin, type DriftFlag
+  type Goal, type Checkin, type DriftFlag, type Transcript, type TranscriptPatterns, type TranscriptScorecard
 } from "@shared/schema";
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
 
@@ -52,6 +52,14 @@ export interface IStorage {
   
   // Weekly review
   getWeeklyReview(userId: string): Promise<{ goals: Goal[]; checkins: Checkin[]; stats: any; driftFlags: string[] }>;
+  
+  // Transcripts (user-scoped)
+  getTranscripts(userId: string): Promise<Transcript[]>;
+  getTranscript(userId: string, id: number): Promise<Transcript | undefined>;
+  createTranscript(userId: string, transcript: InsertTranscript): Promise<Transcript>;
+  updateTranscript(userId: string, id: number, updates: Partial<Transcript>): Promise<Transcript>;
+  deleteTranscript(userId: string, id: number): Promise<boolean>;
+  getTranscriptStats(userId: string): Promise<{ total: number; analyzed: number; totalWords: number; topThemes: any[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -331,6 +339,71 @@ export class DatabaseStorage implements IStorage {
         endDate
       },
       driftFlags: flags
+    };
+  }
+
+  // -------------------- TRANSCRIPTS (USER-SCOPED) --------------------
+  
+  async getTranscripts(userId: string): Promise<Transcript[]> {
+    return await db.select().from(transcripts)
+      .where(eq(transcripts.userId, userId))
+      .orderBy(desc(transcripts.createdAt));
+  }
+
+  async getTranscript(userId: string, id: number): Promise<Transcript | undefined> {
+    const [transcript] = await db.select().from(transcripts)
+      .where(and(eq(transcripts.id, id), eq(transcripts.userId, userId)));
+    return transcript;
+  }
+
+  async createTranscript(userId: string, transcript: InsertTranscript): Promise<Transcript> {
+    const wordCount = transcript.content.split(/\s+/).filter(w => w.length > 0).length;
+    const [newTranscript] = await db.insert(transcripts).values({ 
+      ...transcript, 
+      userId,
+      wordCount 
+    }).returning();
+    return newTranscript;
+  }
+
+  async updateTranscript(userId: string, id: number, updates: Partial<Transcript>): Promise<Transcript> {
+    const { userId: _, ...safeUpdates } = updates as any;
+    const [updated] = await db.update(transcripts)
+      .set(safeUpdates)
+      .where(and(eq(transcripts.id, id), eq(transcripts.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteTranscript(userId: string, id: number): Promise<boolean> {
+    const result = await db.delete(transcripts)
+      .where(and(eq(transcripts.id, id), eq(transcripts.userId, userId)));
+    return true;
+  }
+
+  async getTranscriptStats(userId: string): Promise<{ total: number; analyzed: number; totalWords: number; topThemes: any[] }> {
+    const userTranscripts = await this.getTranscripts(userId);
+    const analyzed = userTranscripts.filter(t => t.analyzed);
+    const totalWords = userTranscripts.reduce((sum, t) => sum + (t.wordCount || 0), 0);
+    
+    const themeMap: Record<string, number> = {};
+    analyzed.forEach(t => {
+      const themes = (t.topThemes as any[]) || [];
+      themes.forEach((theme: any) => {
+        themeMap[theme.theme] = (themeMap[theme.theme] || 0) + (theme.count || 1);
+      });
+    });
+    
+    const topThemes = Object.entries(themeMap)
+      .map(([theme, count]) => ({ theme, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+    
+    return {
+      total: userTranscripts.length,
+      analyzed: analyzed.length,
+      totalWords,
+      topThemes
     };
   }
 }
