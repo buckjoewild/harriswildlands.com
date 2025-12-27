@@ -22,9 +22,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, BrainCircuit, Rocket, Archive, Lightbulb, Zap, Star, Clock, Users, Target, Heart, FlaskConical, BookOpen, Home, Cross } from "lucide-react";
+import { Loader2, Plus, BrainCircuit, Rocket, Archive, Lightbulb, Zap, Star, Clock, Users, Target, Heart, FlaskConical, BookOpen, Home, Cross, Leaf } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CardWithBotanical } from "@/components/BotanicalMotifs";
+import { CanopyView } from "@/components/CanopyView";
 import CoreImagery from "@/lib/coreImagery";
 
 type IdeaFormValues = z.infer<typeof insertIdeaSchema>;
@@ -63,12 +64,12 @@ const TINY_TEST_EXAMPLES = [
 ];
 
 export default function ThinkOps() {
-  const [activeTab, setActiveTab] = useState("capture");
+  const [activeTab, setActiveTab] = useState("canopy");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <div className="space-y-6">
-      {/* Hero Header with ThinkOps Core Imagery */}
+      {/* Hero Header with MS-DOS Console Styling - Canopy Theme */}
       <div className="relative rounded-xl overflow-hidden mb-8">
         <div 
           className="absolute inset-0 bg-cover bg-center"
@@ -77,20 +78,17 @@ export default function ThinkOps() {
             backgroundPosition: "center 15%"
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50" />
         
         <div className="relative z-10 p-6 md:p-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center backdrop-blur-sm">
-              <Lightbulb className="w-7 h-7 text-violet-400" />
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-display font-bold">ThinkOps</h2>
-              <p className="text-sm text-muted-foreground tracking-widest uppercase">
-                Ideas Channel // From Spark to Shipment
-              </p>
-            </div>
+          <div className="bg-black/70 border border-violet-500/50 p-4 md:p-5 backdrop-blur-sm">
+            <p className="font-mono text-violet-400 text-xs mb-1">C:\CANOPY\THINKOPS&gt;</p>
+            <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-violet-300 uppercase">
+              THINK_OPS<span className="animate-pulse">_</span>
+            </h2>
+            <p className="font-mono text-violet-400/80 text-xs mt-2 tracking-wide">
+              &gt; ideas channel // from spark to shipment
+            </p>
           </div>
           
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -116,7 +114,10 @@ export default function ThinkOps() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
+        <TabsList className="grid w-full grid-cols-4 lg:w-[700px]">
+          <TabsTrigger value="canopy" data-testid="tab-canopy">
+            <Leaf className="w-4 h-4 mr-2" /> Canopy
+          </TabsTrigger>
           <TabsTrigger value="capture" data-testid="tab-inbox">
             <Lightbulb className="w-4 h-4 mr-2" /> Inbox
           </TabsTrigger>
@@ -127,6 +128,10 @@ export default function ThinkOps() {
             <Rocket className="w-4 h-4 mr-2" /> Build & Ship
           </TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="canopy" className="mt-6">
+          <CanopyView />
+        </TabsContent>
         
         <TabsContent value="capture" className="mt-6">
           <IdeaList filter="draft" />

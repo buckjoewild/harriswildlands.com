@@ -74,7 +74,7 @@ const PROMPT_EXAMPLES = {
 export default function LifeOps() {
   return (
     <div className="space-y-6">
-      {/* Hero Header with LifeOps Core Imagery */}
+      {/* Hero Header with MS-DOS Console Styling - Root Theme */}
       <div className="relative rounded-xl overflow-hidden mb-8">
         <div 
           className="absolute inset-0 bg-cover bg-center"
@@ -83,17 +83,16 @@ export default function LifeOps() {
             backgroundPosition: "center 20%"
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50" />
         
-        <div className="relative z-10 p-6 md:p-8 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center backdrop-blur-sm">
-            <Activity className="w-7 h-7 text-emerald-400" />
-          </div>
-          <div>
-            <h2 className="text-2xl md:text-3xl font-display font-bold">LifeOps</h2>
-            <p className="text-sm text-muted-foreground tracking-widest uppercase">
-              Stewardship Channel // Daily Calibration
+        <div className="relative z-10 p-6 md:p-8">
+          <div className="bg-black/70 border border-amber-700/50 p-4 md:p-6 backdrop-blur-sm inline-block">
+            <p className="font-mono text-amber-600 text-xs mb-1">C:\ROOTS\LIFEOPS&gt;</p>
+            <h2 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-amber-500 uppercase">
+              LIFE_OPS<span className="animate-pulse">_</span>
+            </h2>
+            <p className="font-mono text-amber-600/80 text-xs mt-3 tracking-wide">
+              &gt; stewardship channel // daily calibration
             </p>
           </div>
         </div>
