@@ -1,10 +1,44 @@
-# Harris Wildlands - Standalone Deployment
+# Thought Weaver / BruceOps - Standalone Deployment
 
 ## Prerequisites
 - Docker & Docker Compose
 - OR Node 20 (for local development)
 
-## Quick Start (Docker)
+## Windows Home Desktop Deployment (Easiest)
+
+For self-hosting on your home Windows desktop:
+
+1. **First Time Setup:**
+   - Install [Docker Desktop](https://docker.com/products/docker-desktop)
+   - Copy the `release/` folder to your desktop
+   - Double-click `deploy-windows.bat`
+
+2. **What the script does:**
+   - Checks Docker is installed and running
+   - Creates environment config
+   - Builds and starts containers
+   - Runs smoke tests (health, database, frontend)
+   - Runs stress tests (rapid requests, concurrent connections)
+   - Opens browser to your app
+
+3. **Quick Test:**
+   - Run `test-app.bat` anytime to verify the app is healthy
+
+4. **App Management:**
+   - Run `manage-app.bat` for a menu with:
+     - Start/Stop/Restart
+     - View live logs
+     - Run health checks
+     - Database backup
+     - Rebuild and deploy
+
+**Access URLs:**
+- Main app: `http://localhost:5000`
+- Demo mode: `http://localhost:5000/?demo=true`
+
+---
+
+## Quick Start (Docker - Manual)
 1. Copy `.env.example` to `.env`
 2. Edit `.env` with your database credentials and optional API keys
 3. Run: `docker compose up`
