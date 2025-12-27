@@ -283,22 +283,70 @@ export async function registerRoutes(
     const idea = await storage.getIdea(userId, id);
     if (!idea) return res.status(404).json({ message: "Idea not found" });
 
+    // Step 1: Basic web search context using AI (simulated research)
+    const searchPrompt = `Research this idea topic: "${idea.title} ${idea.painItSolves || ''}". 
+    Are there existing solutions in the market? Is this problem validated? 
+    Provide 3-5 brief findings about market reality, competitors, and user demand.`;
+    
+    let searchContext = "";
+    try {
+      searchContext = await callAI(searchPrompt, "You are a market research assistant. Be factual and concise.");
+    } catch (err) {
+      console.log("Search context failed, continuing without it");
+    }
+
+    // Step 2: Reality check with comprehensive context
     const prompt = `Perform a Reality Check on this idea. 
-    Separate into Known, Likely, Speculation. 
-    Flag self-deception (Overbuilding, Perfectionism, etc).
-    Suggest a decision bin (Discard, Park, Salvage, Promote).
-    
-    Idea: ${JSON.stringify(idea)}
-    
-    Return pure JSON format: { "known": [], "likely": [], "speculation": [], "flags": [], "decision": "" }`;
 
-    const response = await callAI(prompt, "You are a ruthless but helpful product manager. JSON output only.");
-    
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    const realityCheck = jsonMatch ? JSON.parse(jsonMatch[0]) : { error: "Failed to parse AI response", raw: response };
+IDEA:
+Title: ${idea.title}
+Pitch: ${idea.pitch || 'N/A'}
+Who It Helps: ${idea.whoItHelps || 'N/A'}
+Pain It Solves: ${idea.painItSolves || 'N/A'}
+Excitement: ${idea.excitement || 'N/A'}/10
+Feasibility: ${idea.feasibility || 'N/A'}/10
+Time Estimate: ${idea.timeEstimate || 'N/A'}
 
-    const updated = await storage.updateIdea(userId, id, { realityCheck, status: "reality_checked" });
-    res.json(updated);
+MARKET RESEARCH:
+${searchContext || 'No research available'}
+
+INSTRUCTIONS:
+1. Separate claims into Known (verified facts), Likely (reasonable assumptions), Speculation (hopes/guesses).
+2. Flag self-deception patterns: Overbuilding, Perfectionism, Solution-in-Search-of-Problem, Time Optimism, Feature Creep.
+3. Suggest ONE decision bin: Discard (kill it), Park (revisit later), Salvage (pivot the core), Promote (worth building).
+4. Provide specific reasoning for the decision.
+
+Return ONLY pure JSON format (no markdown, no preamble):
+{
+  "known": ["verified fact 1", "verified fact 2"],
+  "likely": ["reasonable assumption 1", "reasonable assumption 2"],
+  "speculation": ["hope or guess 1"],
+  "flags": ["self-deception pattern 1"],
+  "decision": "Park",
+  "reasoning": "One sentence explaining why this decision"
+}`;
+
+    try {
+      const response = await callAI(prompt, "You are a ruthless but helpful product manager. JSON output only. No markdown.");
+      
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      const realityCheck = jsonMatch ? JSON.parse(jsonMatch[0]) : { 
+        error: "Failed to parse AI response", 
+        raw: response,
+        known: [], 
+        likely: [], 
+        speculation: [], 
+        flags: ["Parse error - manual review needed"], 
+        decision: "Park", 
+        reasoning: "AI response couldn't be parsed. Try again." 
+      };
+
+      const updated = await storage.updateIdea(userId, id, { realityCheck, status: "reality_checked" });
+      res.json(updated);
+    } catch (err) {
+      console.error("Reality check failed:", err);
+      res.status(500).json({ message: "Reality check failed", error: (err as Error).message });
+    }
   });
 
   // Teaching
@@ -488,6 +536,111 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
     res.setHeader('Content-Type', 'text/plain');
     res.setHeader('Content-Disposition', 'attachment; filename="weekly-review.txt"');
     res.send(pdfContent);
+  });
+
+  // AI-powered weekly insight generation (rate-limited to once per day)
+  app.post("/api/review/weekly/insight", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    
+    // Check if already generated today (using settings as cache)
+    const today = new Date().toISOString().split('T')[0];
+    const cacheKey = `weekly-insight-${userId}-${today}`;
+    
+    try {
+      const allSettings = await storage.getSettings();
+      const cachedInsight = allSettings.find(s => s.key === cacheKey);
+      
+      if (cachedInsight) {
+        return res.json({ insight: cachedInsight.value, cached: true });
+      }
+    } catch (err) {
+      console.log("Cache check failed, generating fresh insight");
+    }
+
+    // Generate new insight using the AI stack
+    try {
+      const review = await storage.getWeeklyReview(userId);
+      
+      const prompt = `Bruce, here's your week at a glance:
+
+Completion Rate: ${review.stats.completionRate}%
+Total Check-ins: ${review.stats.totalCheckins}
+Completed: ${review.stats.completedCheckins}
+Missed Days: ${7 - (review.stats.activeDays || 0)}
+Drift Flags: ${review.driftFlags.length > 0 ? review.driftFlags.join('; ') : 'None'}
+
+Domain Performance:
+${Object.entries(review.stats.domainStats || {}).map(([domain, stats]: [string, any]) => 
+  `- ${domain}: ${stats.checkins}/${stats.goals * 7} check-ins (${stats.goals} goals)`
+).join('\n') || 'No domain data available'}
+
+Goals:
+${review.goals.slice(0, 5).map(g => `- [${g.domain}] ${g.title} (Priority: ${g.priority})`).join('\n') || 'No active goals'}
+
+Give me ONE specific action to adjust this week. Be direct. No fluff. 
+Format: "This week, [action]." Then one sentence explaining why.`;
+
+      const insight = await callAI(prompt, "You are Bruce's operations steward. Be practical and direct. Max 2 sentences.");
+      
+      // Cache the insight for the day
+      await storage.updateSetting(cacheKey, insight);
+      
+      res.json({ insight, cached: false });
+    } catch (err) {
+      console.error("Insight generation failed:", err);
+      res.status(500).json({ message: "Failed to generate insight", error: (err as Error).message });
+    }
+  });
+
+  // ==================== AI CHAT ====================
+  
+  // Chat endpoint - proxies to AI with conversation context
+  app.post("/api/chat", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const { messages, context } = req.body;
+    
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ message: "Messages array is required" });
+    }
+    
+    // Build system prompt with Bruce context
+    let systemPrompt = `You are Bruce Steward, a personal operations assistant for the BruceOps system.
+You help Bruce with:
+- LifeOps: Daily logging, routine tracking, energy management
+- ThinkOps: Idea capture, brainstorming analysis, project planning  
+- Goals: Weekly reviews, habit tracking, accountability
+- Teaching: 5th-6th grade lesson planning and classroom prep
+
+IMPORTANT RULES:
+- Keep responses under 3 sentences unless asked for more detail
+- Be direct and practical, not prescriptive or preachy
+- Focus on structure and systems, not motivation
+- Never touch family data or personal relationships
+- Reference Bruce's actual data when relevant`;
+    
+    if (context) {
+      systemPrompt += `\n\nBRUCE'S CURRENT DATA:\n${context}`;
+    }
+    
+    // Get the last user message for the prompt
+    const lastMessage = messages[messages.length - 1];
+    
+    // Build conversation history for context (last 5 messages)
+    const recentHistory = messages.slice(-6, -1).map((m: any) => 
+      `${m.role === 'user' ? 'Bruce' : 'Steward'}: ${m.content}`
+    ).join('\n');
+    
+    const fullPrompt = recentHistory 
+      ? `Previous conversation:\n${recentHistory}\n\nBruce: ${lastMessage.content}`
+      : lastMessage.content;
+    
+    try {
+      const response = await callAI(fullPrompt, systemPrompt);
+      res.json({ response, timestamp: new Date().toISOString() });
+    } catch (err) {
+      console.error("Chat failed:", err);
+      res.status(500).json({ message: "Chat failed", error: (err as Error).message });
+    }
   });
 
   // ==================== TRANSCRIPTS (THINKOPS BRAINDUMPS) ====================

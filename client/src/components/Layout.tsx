@@ -24,7 +24,10 @@ import {
   Sprout,
   TreeDeciduous,
   CloudSun,
-  Microscope
+  Microscope,
+  BrainCircuit,
+  BarChart3,
+  MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -57,6 +60,9 @@ export function Layout({ children }: LayoutProps) {
     { href: "/life-ops", label: "Roots", sublabel: "LifeOps", icon: Sprout },
     { href: "/goals", label: "Growth", sublabel: "Goals", icon: Target },
     { href: "/think-ops", label: "Canopy", sublabel: "ThinkOps", icon: CloudSun },
+    { href: "/reality-check", label: "Reality", sublabel: "Check Ideas", icon: BrainCircuit },
+    { href: "/weekly-review", label: "Review", sublabel: "Weekly", icon: BarChart3 },
+    { href: "/chat", label: "Steward", sublabel: "AI Chat", icon: MessageSquare },
     { href: "/teaching", label: "Lab", sublabel: "Teaching", icon: Microscope },
     { href: "/harris", label: "Wildlands", sublabel: "Brand", icon: Trees },
   ];

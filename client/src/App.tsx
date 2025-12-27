@@ -13,6 +13,9 @@ import ThinkOps from "@/pages/ThinkOps";
 import TeachingAssistant from "@/pages/TeachingAssistant";
 import HarrisWildlands from "@/pages/HarrisWildlands";
 import Settings from "@/pages/Settings";
+import RealityCheck from "@/pages/RealityCheck";
+import WeeklyReview from "@/pages/WeeklyReview";
+import Chat from "@/pages/Chat";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,6 +29,9 @@ function Router() {
         <Route path="/teaching" component={TeachingAssistant} />
         <Route path="/harris" component={HarrisWildlands} />
         <Route path="/settings" component={Settings} />
+        <Route path="/reality-check" component={RealityCheck} />
+        <Route path="/weekly-review" component={WeeklyReview} />
+        <Route path="/chat" component={Chat} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
