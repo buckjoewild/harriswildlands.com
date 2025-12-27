@@ -129,11 +129,11 @@ export function Layout({ children }: LayoutProps) {
             </div>
             
             <div>
-              <h1 className="font-display font-bold text-4xl tracking-tight mb-2 text-white drop-shadow-lg">
+              <h1 className="font-mono font-bold text-4xl tracking-widest mb-3 text-white drop-shadow-lg uppercase">
                 Harris Wildlands
               </h1>
-              <p className="text-lg text-emerald-100/80 italic">
-                Faithful intelligence for family stewardship, wonder, and building.
+              <p className="text-lg text-emerald-100/80 italic font-light">
+                Where roots remember what the canopy dreams.
               </p>
             </div>
             
