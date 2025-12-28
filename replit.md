@@ -13,7 +13,7 @@
 | **Key Users** | Solo admin (faith-centered father/teacher/creator) |
 | **Privacy** | Private by default, no sharing, user-scoped data |
 | **Theme** | Botanical sci-fi terminal (MS-DOS meets forest intelligence) |
-| **Last Updated** | December 27, 2025 |
+| **Last Updated** | December 28, 2025 |
 
 ## Overview
 
@@ -154,8 +154,26 @@ The app supports standalone operation outside Replit:
 | `POST /api/review/weekly/insight` | Generate weekly action recommendation (cached daily) |
 | `POST /api/chat` | Conversational AI with user data context |
 
-### callAI() Function
-Unified AI caller that uses the provider ladder (Gemini -> OpenRouter -> Off) with automatic fallback. Located in `server/routes.ts`.
+### AI Command Center Endpoints (NEW)
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/ai/search` | Semantic search across logs with AI-powered pattern analysis |
+| `POST /api/ai/squad` | Multi-perspective AI analysis (systems thinking) |
+| `POST /api/ai/weekly-synthesis` | Enhanced weekly narrative report with actionable insights |
+| `POST /api/ai/correlations` | Cross-domain correlation detection (energy, stress, mood patterns) |
+| `GET /api/ai/quota` | Check daily AI quota usage (100 calls/day limit) |
+| `POST /api/ai/cache/clear` | Manually clear cached AI responses |
+
+### Cost Protection Features
+- **24-hour Response Caching**: Identical queries return cached results (free, no API cost)
+- **Daily Quota**: 100 AI calls per user per day (resets at midnight)
+- **Rate Limiting**: 10 AI requests/minute per user, 100 general requests/15min
+- **CORS Protection**: Only allowed origins (claude.ai, localhost) can access API
+
+### callAI() and callAIWithCache() Functions
+- `callAI()`: Unified AI caller using provider ladder (Gemini -> OpenRouter -> Off)
+- `callAIWithCache()`: Wrapper with 24-hour caching and quota enforcement
+- Located in `server/routes.ts`
 
 ## Technical Documentation
 
