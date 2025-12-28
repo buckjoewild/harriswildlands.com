@@ -212,9 +212,6 @@ export async function registerRoutes(
     },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => {
-      return getUserId(req) || req.ip || 'anonymous';
-    }
   });
 
   app.use('/api/', generalLimiter);
