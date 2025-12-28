@@ -959,6 +959,140 @@ Be concise and extract only meaningful patterns. Limit each category to top 5 it
 
   // ==================== AI COMMAND CENTER ENDPOINTS ====================
 
+  // ==================== DEV-ONLY TEST ENDPOINT (NO AUTH) ====================
+  // WARNING: Development only - bypasses authentication for testing
+  if (process.env.NODE_ENV !== 'production') {
+    const TEST_USER_ID = 'test-user-dev';
+    
+    app.get("/api/test/ai/status", async (req, res) => {
+      const today = new Date().toISOString().split('T')[0];
+      const quotaKey = `${TEST_USER_ID}-${today}`;
+      const quota = dailyQuotas.get(quotaKey) || { count: 0, date: today };
+      
+      res.json({
+        message: 'AI Command Center Test Endpoint',
+        testUserId: TEST_USER_ID,
+        environment: process.env.NODE_ENV,
+        aiProvider: AI_PROVIDER,
+        quota: {
+          used: quota.count,
+          limit: DAILY_QUOTA_LIMIT,
+          remaining: DAILY_QUOTA_LIMIT - quota.count
+        },
+        cache: {
+          size: aiCache.size,
+          ttlHours: AI_CACHE_TTL / (1000 * 60 * 60)
+        }
+      });
+    });
+
+    app.post("/api/test/ai/search", async (req, res) => {
+      try {
+        const { query, limit = 10 } = req.body;
+        
+        if (!query || typeof query !== 'string') {
+          return res.status(400).json({ error: 'Query string required' });
+        }
+        
+        const allLogs = await storage.getLogs(TEST_USER_ID);
+        const searchTerm = query.toLowerCase();
+        const filtered = allLogs.filter(log => {
+          return JSON.stringify(log).toLowerCase().includes(searchTerm);
+        }).slice(0, Number(limit));
+        
+        if (filtered.length === 0) {
+          return res.json({ 
+            count: 0, 
+            samples: [], 
+            insight: 'No logs found matching your search (test user has no data).',
+            cached: false,
+            testMode: true
+          });
+        }
+        
+        const prompt = `Analyze these ${filtered.length} log entries that match the search "${query}".
+        
+Logs: ${JSON.stringify(filtered.map(l => ({
+  date: l.date,
+  energy: l.energy,
+  stress: l.stress,
+  mood: l.mood,
+  topWin: l.topWin,
+  topFriction: l.topFriction
+})))}
+
+Provide a 2-3 sentence insight about patterns you notice.`;
+
+        const { response: insight, cached } = await callAIWithCache(
+          TEST_USER_ID,
+          prompt,
+          "You are a Life Operations analyst. Identify patterns and provide factual observations."
+        );
+        
+        const today = new Date().toISOString().split('T')[0];
+        res.json({
+          count: filtered.length,
+          samples: filtered,
+          insight,
+          cached,
+          testMode: true,
+          quotaRemaining: DAILY_QUOTA_LIMIT - (dailyQuotas.get(`${TEST_USER_ID}-${today}`)?.count || 0)
+        });
+        
+      } catch (err: any) {
+        console.error('Test AI Search error:', err);
+        const isQuotaError = err.message?.includes('quota exceeded');
+        res.status(isQuotaError ? 429 : 500).json({ error: err.message || 'Search failed', testMode: true });
+      }
+    });
+
+    app.post("/api/test/ai/squad", async (req, res) => {
+      try {
+        const { question } = req.body;
+        
+        if (!question || typeof question !== 'string') {
+          return res.status(400).json({ error: 'Question string required' });
+        }
+        
+        const prompt = `${question}
+
+Provide a systems-thinking perspective in 2-3 sentences. Focus on interconnections and patterns.`;
+
+        const { response, cached } = await callAIWithCache(
+          TEST_USER_ID,
+          prompt,
+          "You are an AI advisor providing multi-perspective analysis."
+        );
+        
+        const today = new Date().toISOString().split('T')[0];
+        res.json({
+          perspectives: { systems: response },
+          cached,
+          testMode: true,
+          quotaRemaining: DAILY_QUOTA_LIMIT - (dailyQuotas.get(`${TEST_USER_ID}-${today}`)?.count || 0)
+        });
+        
+      } catch (err: any) {
+        console.error('Test AI Squad error:', err);
+        const isQuotaError = err.message?.includes('quota exceeded');
+        res.status(isQuotaError ? 429 : 500).json({ error: err.message || 'Squad query failed', testMode: true });
+      }
+    });
+
+    app.post("/api/test/ai/cache/clear", async (req, res) => {
+      const sizeBefore = aiCache.size;
+      aiCache.clear();
+      res.json({ 
+        message: 'Cache cleared',
+        entriesCleared: sizeBefore,
+        testMode: true
+      });
+    });
+
+    console.log('⚠️  DEV MODE: Test endpoints enabled at /api/test/ai/*');
+  }
+  // ==================== END DEV-ONLY TEST ENDPOINTS ====================
+
   // 1. Smart Search - AI-powered search with analysis
   app.post("/api/ai/search", isAuthenticated, async (req, res) => {
     try {
