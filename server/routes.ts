@@ -737,46 +737,75 @@ IMPORTANT RULES:
     const transcript = await storage.getTranscript(userId, parseInt(req.params.id));
     if (!transcript) return res.status(404).json({ error: "Transcript not found" });
 
-    const analysisPrompt = `Analyze this brainstorming transcript and extract patterns. Return a JSON object with exactly these fields:
+    // Truncate very long transcripts to avoid token limits (keep first ~8000 chars)
+    const MAX_CONTENT_LENGTH = 8000;
+    let contentToAnalyze = transcript.content;
+    let truncated = false;
+    if (contentToAnalyze.length > MAX_CONTENT_LENGTH) {
+      contentToAnalyze = contentToAnalyze.slice(0, MAX_CONTENT_LENGTH) + "\n\n[... transcript truncated for analysis ...]";
+      truncated = true;
+      console.log(`Transcript ${transcript.id} truncated from ${transcript.content.length} to ${MAX_CONTENT_LENGTH} chars`);
+    }
+
+    const analysisPrompt = `Analyze this brainstorming transcript and extract patterns. Return ONLY a valid JSON object (no markdown, no explanation) with exactly these fields:
 {
   "patterns": {
-    "topics": [{"text": "theme name", "count": N, "quotes": ["direct quote 1", "quote 2"]}],
-    "actions": [{"text": "action item", "count": 1, "quotes": ["context quote"]}],
-    "questions": [{"text": "question raised", "count": 1, "quotes": ["full question"]}],
-    "energy": [{"text": "high/medium/low", "count": 1, "quotes": ["indicator quote"]}],
-    "connections": [{"text": "related project/idea", "count": N, "quotes": ["reference quote"]}]
+    "topics": [{"text": "theme name", "count": 1, "quotes": ["quote"]}],
+    "actions": [{"text": "action item", "count": 1, "quotes": ["context"]}],
+    "questions": [{"text": "question", "count": 1, "quotes": ["full question"]}],
+    "energy": [{"text": "high", "count": 1, "quotes": ["indicator"]}],
+    "connections": [{"text": "related idea", "count": 1, "quotes": ["reference"]}]
   },
-  "topThemes": [{"theme": "name", "count": N, "quotes": ["key quote"]}],
+  "topThemes": [{"theme": "name", "count": 1, "quotes": ["quote"]}],
   "scorecard": {
     "totalWords": ${transcript.wordCount},
-    "uniqueTopics": N,
-    "actionItems": N,
-    "questions": N,
-    "energyLevel": "high/medium/low",
-    "topTheme": "most discussed topic"
+    "uniqueTopics": 3,
+    "actionItems": 2,
+    "questions": 2,
+    "energyLevel": "high",
+    "topTheme": "main topic"
   }
 }
 
 TRANSCRIPT:
-${transcript.content}`;
+${contentToAnalyze}`;
 
     const lanePrompt = `You are analyzing brainstorming transcripts for ThinkOps pattern detection.
-Focus on identifying recurring themes, actionable ideas, open questions, and connections to other projects.
-Be concise and extract only meaningful patterns. Limit each category to top 5 items.`;
+Return ONLY valid JSON - no markdown code blocks, no explanation text.
+Focus on identifying recurring themes, actionable ideas, open questions, and connections.
+Limit each category to top 5 items maximum.`;
 
     try {
+      console.log(`Analyzing transcript ${transcript.id} (${transcript.wordCount} words, ${truncated ? 'truncated' : 'full'})`);
       const aiResponse = await callAI(analysisPrompt, lanePrompt);
+      console.log(`AI response received (${aiResponse.length} chars)`);
       
       let analysisData;
       try {
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        // Try to extract JSON from response (handles markdown code blocks too)
+        let jsonStr = aiResponse;
+        
+        // Remove markdown code blocks if present
+        const codeBlockMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (codeBlockMatch) {
+          jsonStr = codeBlockMatch[1].trim();
+        }
+        
+        // Find JSON object
+        const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           analysisData = JSON.parse(jsonMatch[0]);
         } else {
           throw new Error("No JSON found in response");
         }
-      } catch (parseError) {
-        return res.status(500).json({ error: "Failed to parse AI analysis", raw: aiResponse });
+      } catch (parseError: any) {
+        console.error("JSON parse error:", parseError.message);
+        console.error("Raw AI response:", aiResponse.slice(0, 500));
+        return res.status(500).json({ 
+          error: "Failed to parse AI analysis", 
+          parseError: parseError.message,
+          raw: aiResponse.slice(0, 1000) 
+        });
       }
 
       const updated = await storage.updateTranscript(userId, transcript.id, {
@@ -786,8 +815,9 @@ Be concise and extract only meaningful patterns. Limit each category to top 5 it
         analyzed: true
       });
 
-      res.json(updated);
+      res.json({ ...updated, truncated });
     } catch (error: any) {
+      console.error("Transcript analysis error:", error);
       res.status(500).json({ error: error.message || "Analysis failed" });
     }
   });
