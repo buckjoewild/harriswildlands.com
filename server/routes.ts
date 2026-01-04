@@ -44,7 +44,7 @@ async function callGemini(prompt: string, systemPrompt: string): Promise<string>
   if (!GOOGLE_GEMINI_API_KEY) throw new Error("Gemini API key not available");
   
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -59,6 +59,12 @@ async function callGemini(prompt: string, systemPrompt: string): Promise<string>
   if (!response.ok) {
     console.error("Gemini API error response:", JSON.stringify(data));
     throw new Error(`Gemini API error: ${JSON.stringify(data)}`);
+  }
+  
+  // Check for quota/rate limit errors
+  if (data.error?.status === "RESOURCE_EXHAUSTED") {
+    console.error("Gemini quota exceeded:", data.error.message);
+    throw new Error("Gemini quota exceeded - please wait and try again");
   }
   
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -131,7 +137,7 @@ async function callAIWithFullPrompt(prompt: string, systemPrompt: string): Promi
     }
   }
   
-  return "AI insights unavailable. Daily logging completed successfully.";
+  return "AI temporarily unavailable (quota limit reached). Please try again in a few minutes.";
 }
 
 // Check database connectivity
