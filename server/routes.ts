@@ -226,16 +226,118 @@ export async function registerRoutes(
   console.log('   - General: 100 req/15min');
   console.log('   - AI: 10 req/min per user');
 
+  // ==================== DUAL AUTH MIDDLEWARE ====================
+  // Token authentication middleware (for MCP / Claude Desktop)
+  async function authenticateToken(req: Request, res: Response, next: NextFunction) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+    
+    const userId = await storage.validateApiToken(token);
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    
+    // Attach userId to request (compatible with session auth)
+    (req as any).userId = userId;
+    (req as any).user = { claims: { sub: userId } };
+    next();
+  }
+
+  // Dual-auth middleware (accepts EITHER session OR token)
+  async function authenticateDual(req: Request, res: Response, next: NextFunction) {
+    // Check for session first (web UI)
+    if ((req as any).isAuthenticated && (req as any).isAuthenticated()) {
+      return next();
+    }
+    
+    // Fall back to token auth (MCP server)
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authenticateToken(req, res, next);
+    }
+    
+    // No valid auth found
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  console.log('✅ Dual-auth middleware enabled (session + token)');
+
   // /api/me endpoint for frontend to get current user info
   app.get("/api/me", isAuthenticated, async (req, res) => {
     const userId = getUserId(req);
     res.json({ id: userId, claims: (req.user as any)?.claims });
   });
 
-  // ==================== ALL ROUTES BELOW REQUIRE AUTH ====================
+  // ==================== API TOKEN MANAGEMENT (Session auth only) ====================
+  
+  // Generate new token
+  app.post('/api/settings/tokens', isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { name } = req.body;
+      
+      const token = await storage.createApiToken(userId, name);
+      
+      res.json({
+        token,
+        message: 'Token generated. Copy now - you will not see it again!',
+        warning: 'Store this token securely. It grants full access to your data.'
+      });
+      
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // List user's tokens (without revealing actual token values)
+  app.get('/api/settings/tokens', isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const tokens = await storage.getApiTokens(userId);
+      
+      // Don't return actual token values
+      const safeTokens = tokens.map(t => ({
+        id: t.id,
+        name: t.name,
+        createdAt: t.createdAt,
+        lastUsed: t.lastUsed,
+        expiresAt: t.expiresAt,
+        preview: t.token.substring(0, 8) + '...' // First 8 chars only
+      }));
+      
+      res.json(safeTokens);
+      
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Revoke token
+  app.delete('/api/settings/tokens/:tokenId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const tokenId = parseInt(req.params.tokenId);
+      
+      await storage.revokeApiToken(userId, tokenId);
+      
+      res.json({ message: 'Token revoked successfully' });
+      
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  console.log('✅ Token management endpoints registered');
+
+  // ==================== ALL ROUTES BELOW SUPPORT DUAL AUTH ====================
 
   // Dashboard
-  app.get(api.dashboard.get.path, isAuthenticated, async (req, res) => {
+  app.get(api.dashboard.get.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const stats = await storage.getDashboardStats(userId);
     const driftFlags = ["Sleep consistency < 70%", "High stress pattern detected"]; 
@@ -243,14 +345,14 @@ export async function registerRoutes(
   });
 
   // Logs - returns user's logs only (client handles empty state with examples)
-  app.get(api.logs.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.logs.list.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const logs = await storage.getLogs(userId);
     res.json(logs);
   });
 
   // Get log by date (for duplicate detection)
-  app.get("/api/logs/:date", isAuthenticated, async (req, res) => {
+  app.get("/api/logs/:date", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const { date } = req.params;
     const log = await storage.getLogByDate(userId, date);
@@ -260,7 +362,7 @@ export async function registerRoutes(
     res.json(log);
   });
 
-  app.post(api.logs.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.logs.create.path, authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const input = api.logs.create.input.parse(req.body);
@@ -275,7 +377,7 @@ export async function registerRoutes(
   });
 
   // Update existing log
-  app.put("/api/logs/:id", isAuthenticated, async (req, res) => {
+  app.put("/api/logs/:id", authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const id = Number(req.params.id);
@@ -293,7 +395,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.logs.generateSummary.path, isAuthenticated, async (req, res) => {
+  app.post(api.logs.generateSummary.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const { date } = req.body;
     const log = await storage.getLogByDate(userId, date);
@@ -309,13 +411,13 @@ export async function registerRoutes(
   });
 
   // Ideas
-  app.get(api.ideas.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.ideas.list.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const ideas = await storage.getIdeas(userId);
     res.json(ideas);
   });
 
-  app.post(api.ideas.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.ideas.create.path, authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const input = api.ideas.create.input.parse(req.body);
@@ -329,7 +431,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.ideas.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.ideas.update.path, authenticateDual, async (req, res) => {
      const userId = getUserId(req);
      const id = Number(req.params.id);
      // Strip userId from payload to prevent authorization bypass
@@ -338,7 +440,7 @@ export async function registerRoutes(
      res.json(updated);
   });
 
-  app.post(api.ideas.runRealityCheck.path, isAuthenticated, async (req, res) => {
+  app.post(api.ideas.runRealityCheck.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const id = Number(req.params.id);
     const idea = await storage.getIdea(userId, id);
@@ -411,13 +513,13 @@ Return ONLY pure JSON format (no markdown, no preamble):
   });
 
   // Teaching
-  app.get(api.teaching.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.teaching.list.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const reqs = await storage.getTeachingRequests(userId);
     res.json(reqs);
   });
 
-  app.post(api.teaching.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.teaching.create.path, authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const input = api.teaching.create.input.parse(req.body);
@@ -444,7 +546,7 @@ Return ONLY pure JSON format (no markdown, no preamble):
   });
 
   // Harris
-  app.post(api.harris.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.harris.create.path, authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const input = api.harris.create.input.parse(req.body);
@@ -472,12 +574,12 @@ Return ONLY pure JSON format (no markdown, no preamble):
   });
 
   // Settings
-  app.get(api.settings.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.settings.list.path, authenticateDual, async (req, res) => {
     const settings = await storage.getSettings();
     res.json(settings);
   });
 
-  app.put(api.settings.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.settings.update.path, authenticateDual, async (req, res) => {
     const key = req.params.key;
     const { value } = req.body;
     const updated = await storage.updateSetting(key, value);
@@ -486,13 +588,13 @@ Return ONLY pure JSON format (no markdown, no preamble):
 
   // ==================== GOALS ====================
   
-  app.get(api.goals.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.goals.list.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const goals = await storage.getGoals(userId);
     res.json(goals);
   });
 
-  app.post(api.goals.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.goals.create.path, authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const input = api.goals.create.input.parse(req.body);
@@ -506,7 +608,7 @@ Return ONLY pure JSON format (no markdown, no preamble):
     }
   });
 
-  app.put(api.goals.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.goals.update.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const id = Number(req.params.id);
     const { userId: _, ...updates } = req.body;
@@ -517,14 +619,14 @@ Return ONLY pure JSON format (no markdown, no preamble):
 
   // ==================== CHECKINS ====================
   
-  app.get(api.checkins.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.checkins.list.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
     const checkins = await storage.getCheckins(userId, startDate, endDate);
     res.json(checkins);
   });
 
-  app.post(api.checkins.upsert.path, isAuthenticated, async (req, res) => {
+  app.post(api.checkins.upsert.path, authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const input = api.checkins.upsert.input.parse(req.body);
@@ -538,7 +640,7 @@ Return ONLY pure JSON format (no markdown, no preamble):
     }
   });
 
-  app.post(api.checkins.batch.path, isAuthenticated, async (req, res) => {
+  app.post(api.checkins.batch.path, authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const inputs = api.checkins.batch.input.parse(req.body);
@@ -558,13 +660,13 @@ Return ONLY pure JSON format (no markdown, no preamble):
 
   // ==================== WEEKLY REVIEW ====================
   
-  app.get(api.weeklyReview.get.path, isAuthenticated, async (req, res) => {
+  app.get(api.weeklyReview.get.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const review = await storage.getWeeklyReview(userId);
     res.json(review);
   });
 
-  app.get(api.weeklyReview.exportPdf.path, isAuthenticated, async (req, res) => {
+  app.get(api.weeklyReview.exportPdf.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const review = await storage.getWeeklyReview(userId);
     
@@ -600,7 +702,7 @@ ${review.driftFlags.length > 0 ? review.driftFlags.map(f => `- ${f}`).join('\n')
   });
 
   // AI-powered weekly insight generation (rate-limited to once per day)
-  app.post("/api/review/weekly/insight", isAuthenticated, async (req, res) => {
+  app.post("/api/review/weekly/insight", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     
     // Check if already generated today (using settings as cache)
@@ -656,7 +758,7 @@ Format: "This week, [action]." Then one sentence explaining why.`;
   // ==================== AI CHAT ====================
   
   // Chat endpoint - proxies to AI with conversation context
-  app.post("/api/chat", isAuthenticated, async (req, res) => {
+  app.post("/api/chat", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const { messages, context } = req.body;
     
@@ -708,7 +810,7 @@ IMPORTANT RULES:
   
   // Lab prompt endpoint - sends prompt to AI with custom persona system prompt
   // Uses callAIWithFullPrompt to bypass Bruce context for pure persona behavior
-  app.post("/api/lab/prompt", isAuthenticated, async (req, res) => {
+  app.post("/api/lab/prompt", authenticateDual, async (req, res) => {
     const { prompt, systemPrompt } = req.body;
     
     if (!prompt || !systemPrompt) {
@@ -726,26 +828,26 @@ IMPORTANT RULES:
 
   // ==================== TRANSCRIPTS (THINKOPS BRAINDUMPS) ====================
   
-  app.get("/api/transcripts", isAuthenticated, async (req, res) => {
+  app.get("/api/transcripts", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const transcripts = await storage.getTranscripts(userId);
     res.json(transcripts);
   });
 
-  app.get("/api/transcripts/stats", isAuthenticated, async (req, res) => {
+  app.get("/api/transcripts/stats", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const stats = await storage.getTranscriptStats(userId);
     res.json(stats);
   });
 
-  app.get("/api/transcripts/:id", isAuthenticated, async (req, res) => {
+  app.get("/api/transcripts/:id", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const transcript = await storage.getTranscript(userId, parseInt(req.params.id));
     if (!transcript) return res.status(404).json({ error: "Transcript not found" });
     res.json(transcript);
   });
 
-  app.post("/api/transcripts", isAuthenticated, async (req, res) => {
+  app.post("/api/transcripts", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const { title, content, fileName, sessionDate, participants } = req.body;
     if (!title || !content) {
@@ -757,7 +859,7 @@ IMPORTANT RULES:
     res.json(transcript);
   });
 
-  app.post("/api/transcripts/:id/analyze", isAuthenticated, async (req, res) => {
+  app.post("/api/transcripts/:id/analyze", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const transcript = await storage.getTranscript(userId, parseInt(req.params.id));
     if (!transcript) return res.status(404).json({ error: "Transcript not found" });
@@ -847,7 +949,7 @@ Limit each category to top 5 items maximum.`;
     }
   });
 
-  app.delete("/api/transcripts/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/transcripts/:id", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     await storage.deleteTranscript(userId, parseInt(req.params.id));
     res.json({ success: true });
@@ -855,7 +957,7 @@ Limit each category to top 5 items maximum.`;
 
   // ==================== DATA EXPORT ====================
   
-  app.get("/api/export/data", isAuthenticated, async (req, res) => {
+  app.get("/api/export/data", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     
     const [logs, ideas, goals, checkins, teaching, harris, settings, transcripts] = await Promise.all([
@@ -899,7 +1001,7 @@ Limit each category to top 5 items maximum.`;
   };
 
   // List files from Google Drive
-  app.get("/api/drive/files", isAuthenticated, async (req, res) => {
+  app.get("/api/drive/files", authenticateDual, async (req, res) => {
     if (isStandalone) {
       return res.status(503).json(driveDisabledResponse);
     }
@@ -915,7 +1017,7 @@ Limit each category to top 5 items maximum.`;
   });
 
   // Upload file to Google Drive
-  app.post("/api/drive/upload", isAuthenticated, async (req, res) => {
+  app.post("/api/drive/upload", authenticateDual, async (req, res) => {
     if (isStandalone) {
       return res.status(503).json(driveDisabledResponse);
     }
@@ -934,7 +1036,7 @@ Limit each category to top 5 items maximum.`;
   });
 
   // Download file from Google Drive
-  app.get("/api/drive/download/:fileId", isAuthenticated, async (req, res) => {
+  app.get("/api/drive/download/:fileId", authenticateDual, async (req, res) => {
     if (isStandalone) {
       return res.status(503).json(driveDisabledResponse);
     }
@@ -949,7 +1051,7 @@ Limit each category to top 5 items maximum.`;
   });
 
   // Create folder in Google Drive
-  app.post("/api/drive/folder", isAuthenticated, async (req, res) => {
+  app.post("/api/drive/folder", authenticateDual, async (req, res) => {
     if (isStandalone) {
       return res.status(503).json(driveDisabledResponse);
     }
@@ -1149,7 +1251,7 @@ Provide a systems-thinking perspective in 2-3 sentences. Focus on interconnectio
   // ==================== END DEV-ONLY TEST ENDPOINTS ====================
 
   // 1. Smart Search - AI-powered search with analysis
-  app.post("/api/ai/search", isAuthenticated, async (req, res) => {
+  app.post("/api/ai/search", authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const { query, limit = 10 } = req.body;
@@ -1209,7 +1311,7 @@ Provide a 2-3 sentence insight about patterns you notice. Be specific and action
   });
 
   // 2. AI Squad Panel - Multi-perspective analysis
-  app.post("/api/ai/squad", isAuthenticated, async (req, res) => {
+  app.post("/api/ai/squad", authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const { question } = req.body;
@@ -1256,7 +1358,7 @@ Provide a systems-thinking perspective in 2-3 sentences. Focus on interconnectio
   });
 
   // 3. Weekly Synthesis - Enhanced narrative report
-  app.post("/api/ai/weekly-synthesis", isAuthenticated, async (req, res) => {
+  app.post("/api/ai/weekly-synthesis", authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const review = await storage.getWeeklyReview(userId);
@@ -1319,7 +1421,7 @@ This week, [specific action recommendation].`;
   });
 
   // 4. Find Correlations - Pattern detection across metrics
-  app.post("/api/ai/correlations", isAuthenticated, async (req, res) => {
+  app.post("/api/ai/correlations", authenticateDual, async (req, res) => {
     try {
       const userId = getUserId(req);
       const { days = 30 } = req.body;
@@ -1377,7 +1479,7 @@ Be specific with numbers. Only report correlations that appear in at least 5 dat
   });
 
   // 5. AI Quota Status
-  app.get("/api/ai/quota", isAuthenticated, async (req, res) => {
+  app.get("/api/ai/quota", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const today = new Date().toISOString().split('T')[0];
     const quotaKey = `${userId}-${today}`;
@@ -1393,7 +1495,7 @@ Be specific with numbers. Only report correlations that appear in at least 5 dat
   });
 
   // 6. Clear Cache - Manual cache invalidation
-  app.post("/api/ai/cache/clear", isAuthenticated, async (req, res) => {
+  app.post("/api/ai/cache/clear", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     
     let cleared = 0;

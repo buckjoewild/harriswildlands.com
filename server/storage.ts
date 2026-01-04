@@ -1,12 +1,14 @@
 import { db } from "./db";
 import {
-  logs, ideas, teachingRequests, harrisContent, settings, goals, checkins, driftFlags, transcripts,
+  logs, ideas, teachingRequests, harrisContent, settings, goals, checkins, driftFlags, transcripts, apiTokens,
   type InsertLog, type InsertIdea, type InsertTeachingRequest, type InsertHarrisContent,
   type InsertGoal, type InsertCheckin, type InsertTranscript,
   type Log, type Idea, type TeachingRequest, type HarrisContent, type Setting,
-  type Goal, type Checkin, type DriftFlag, type Transcript, type TranscriptPatterns, type TranscriptScorecard
+  type Goal, type Checkin, type DriftFlag, type Transcript, type TranscriptPatterns, type TranscriptScorecard,
+  type ApiToken
 } from "@shared/schema";
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
+import crypto from "crypto";
 
 export interface IStorage {
   // Logs (user-scoped)
@@ -60,6 +62,12 @@ export interface IStorage {
   updateTranscript(userId: string, id: number, updates: Partial<Transcript>): Promise<Transcript>;
   deleteTranscript(userId: string, id: number): Promise<boolean>;
   getTranscriptStats(userId: string): Promise<{ total: number; analyzed: number; totalWords: number; topThemes: any[] }>;
+  
+  // API Tokens (for MCP / Claude Desktop)
+  createApiToken(userId: string, name?: string): Promise<string>;
+  getApiTokens(userId: string): Promise<ApiToken[]>;
+  validateApiToken(token: string): Promise<string | null>;
+  revokeApiToken(userId: string, tokenId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -405,6 +413,63 @@ export class DatabaseStorage implements IStorage {
       totalWords,
       topThemes
     };
+  }
+
+  // -------------------- API TOKENS (for MCP / Claude Desktop) --------------------
+  
+  async createApiToken(userId: string, name?: string): Promise<string> {
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    await db.insert(apiTokens).values({
+      userId,
+      token,
+      name: name || 'Unnamed Token',
+      lastUsed: null,
+      expiresAt: null
+    });
+    
+    return token; // Return plain token ONLY on creation
+  }
+  
+  async getApiTokens(userId: string): Promise<ApiToken[]> {
+    return await db.select()
+      .from(apiTokens)
+      .where(eq(apiTokens.userId, userId))
+      .orderBy(desc(apiTokens.createdAt));
+  }
+  
+  async validateApiToken(token: string): Promise<string | null> {
+    const results = await db.select()
+      .from(apiTokens)
+      .where(eq(apiTokens.token, token))
+      .limit(1);
+    
+    if (results.length === 0) return null;
+    
+    const tokenData = results[0];
+    
+    // Check expiration
+    if (tokenData.expiresAt && new Date() > tokenData.expiresAt) {
+      return null;
+    }
+    
+    // Update last used
+    await db.update(apiTokens)
+      .set({ lastUsed: new Date() })
+      .where(eq(apiTokens.id, tokenData.id));
+    
+    return tokenData.userId;
+  }
+  
+  async revokeApiToken(userId: string, tokenId: number): Promise<boolean> {
+    await db.delete(apiTokens)
+      .where(
+        and(
+          eq(apiTokens.id, tokenId),
+          eq(apiTokens.userId, userId)
+        )
+      );
+    return true;
   }
 }
 

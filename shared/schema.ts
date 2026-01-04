@@ -207,6 +207,18 @@ export const driftFlags = pgTable("drift_flags", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === API TOKENS (for MCP / Claude Desktop dual-access) ===
+
+export const apiTokens = pgTable("api_tokens", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  token: text("token").notNull().unique(),
+  name: text("name"), // e.g., "Claude Desktop - Main Computer"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsed: timestamp("last_used"),
+  expiresAt: timestamp("expires_at"), // null = never expires
+});
+
 // === THINKOPS: BRAINDUMP TRANSCRIPTS ===
 
 // Pattern categories for analysis
@@ -252,6 +264,7 @@ export const insertGoalSchema = createInsertSchema(goals).omit({ id: true, userI
 export const insertCheckinSchema = createInsertSchema(checkins).omit({ id: true, userId: true, createdAt: true });
 export const insertDriftFlagSchema = createInsertSchema(driftFlags).omit({ id: true, userId: true, createdAt: true });
 export const insertTranscriptSchema = createInsertSchema(transcripts).omit({ id: true, userId: true, createdAt: true, patterns: true, topThemes: true, scorecard: true, analyzed: true, wordCount: true });
+export const insertApiTokenSchema = createInsertSchema(apiTokens).omit({ id: true, createdAt: true, lastUsed: true });
 
 // === TYPES ===
 
@@ -284,6 +297,9 @@ export type InsertDriftFlag = z.infer<typeof insertDriftFlagSchema>;
 
 export type Transcript = typeof transcripts.$inferSelect;
 export type InsertTranscript = z.infer<typeof insertTranscriptSchema>;
+
+export type ApiToken = typeof apiTokens.$inferSelect;
+export type InsertApiToken = z.infer<typeof insertApiTokenSchema>;
 
 // Pattern analysis types
 export type PatternItem = {
