@@ -28,7 +28,11 @@ interface Message {
   timestamp: string;
 }
 
-export default function Chat() {
+interface ChatProps {
+  embedded?: boolean;
+}
+
+export default function Chat({ embedded = false }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -169,13 +173,76 @@ export default function Chat() {
     { icon: <BookOpen className="w-4 h-4" />, text: "Goal progress", query: "How am I doing on my goals?" }
   ];
 
+  const renderChatUI = () => (
+    <div className="flex flex-col h-[600px]">
+      <Card className="glass-card mb-4 flex-shrink-0">
+        <CardHeader className="py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Bruce Steward</CardTitle>
+                <p className="text-xs text-muted-foreground">AI Assistant</p>
+              </div>
+            </div>
+            <Button onClick={clearHistory} variant="ghost" size="icon" className="text-destructive" data-testid="button-clear-chat">
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <Card className="glass-card flex-1 overflow-hidden mb-4">
+        <CardContent className="p-4 h-full overflow-y-auto">
+          <div className="space-y-4">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] rounded-xl p-4 ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border"}`} data-testid={`message-${msg.role}-${i}`}>
+                  <div className="flex items-center gap-2 mb-2 opacity-70">
+                    {msg.role === "user" ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
+                    <span className="text-xs">{msg.role === "user" ? "You" : "Steward"}</span>
+                  </div>
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card flex-shrink-0">
+        <CardContent className="p-4">
+          <div className="flex gap-2">
+            <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Ask me anything..." className="flex-1" disabled={loading} data-testid="input-chat" />
+            <Button onClick={handleSend} disabled={!input.trim() || loading} className="gap-2" data-testid="button-send-chat">
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  if (embedded) {
+    return renderChatUI();
+  }
+
   return (
     <div className="relative min-h-full flex flex-col">
-      {/* Background */}
       <div 
         className="fixed inset-0 bg-cover bg-center opacity-10 pointer-events-none"
         style={{ 
-          backgroundImage: `url(${LaneBg.core})`,
+          backgroundImage: `url(${LaneBg.systems})`,
           backgroundPosition: "center 30%"
         }}
       />

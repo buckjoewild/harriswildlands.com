@@ -13,16 +13,27 @@
 | **Key Users** | Solo admin (faith-centered father/teacher/creator) |
 | **Privacy** | Private by default, no sharing, user-scoped data |
 | **Theme** | Botanical sci-fi terminal (MS-DOS meets forest intelligence) |
-| **Last Updated** | December 28, 2025 |
+| **Last Updated** | January 4, 2026 |
 
 ## Overview
 
-BruceOps is a modular personal operating system that consolidates four operational "lanes" into a unified web application:
+BruceOps is a modular personal operating system with a simplified 7-tab navigation:
 
-1. **LifeOps** - Daily calibration, routines, logs, and family leadership tracking
-2. **ThinkOps** - Idea capture, reality-checking, and project pipeline management
-3. **Teaching Assistant** - Standards-aligned lesson plan generation for classroom use
-4. **HarrisWildlands** - Brand content and website copy generation
+| Tab | Description | Route |
+|-----|-------------|-------|
+| **Home** | Dashboard overview | `/` |
+| **Life** | Daily calibration, routines, logs | `/life` |
+| **Goals** | Trunk (core) & Leaves (growth) tracking | `/goals` |
+| **Think** | Ideas, reality-checking, project pipeline | `/think` |
+| **Bruce™** | AI Hub (Review, Steward, Teaching tabs) | `/bruce` |
+| **Lab** | AI Playground with personas & puzzles | `/lab` |
+| **Wildlands** | Brand content generation | `/harris` |
+
+### Navigation Redesign (Jan 2026)
+- Consolidated AI features into Bruce™ hub page with internal tabs
+- Added Lab page for experimental AI interactions
+- Renamed: LifeOps→Life, ThinkOps→Think
+- Botanical naming: Core→Trunk, Growth→Leaves
 
 The application serves as a personalized AI assistant for a faith-centered father/teacher/creator, with strict privacy guardrails and a distinctive "botanical sci-fi" visual design aesthetic.
 

@@ -56,14 +56,12 @@ export function Layout({ children }: LayoutProps) {
   const { theme, setTheme, overlayEnabled, setOverlayEnabled } = useTheme();
 
   const navItems = [
-    { href: "/", label: "Core", sublabel: "BruceOps", icon: Eye },
-    { href: "/life-ops", label: "Roots", sublabel: "LifeOps", icon: Sprout },
-    { href: "/goals", label: "Growth", sublabel: "Goals", icon: Target },
-    { href: "/think-ops", label: "Canopy", sublabel: "ThinkOps", icon: CloudSun },
-    { href: "/reality-check", label: "Reality", sublabel: "Check Ideas", icon: BrainCircuit },
-    { href: "/weekly-review", label: "Review", sublabel: "Weekly", icon: BarChart3 },
-    { href: "/chat", label: "Steward", sublabel: "AI Chat", icon: MessageSquare },
-    { href: "/teaching", label: "Lab", sublabel: "Teaching", icon: Microscope },
+    { href: "/", label: "Home", sublabel: "Dashboard", icon: Eye },
+    { href: "/life", label: "Life", sublabel: "Daily Calibration", icon: Sprout },
+    { href: "/goals", label: "Goals", sublabel: "Trunk & Leaves", icon: Target },
+    { href: "/think", label: "Think", sublabel: "Ideas & Analysis", icon: CloudSun },
+    { href: "/bruce", label: "Bruce\u2122", sublabel: "AI Hub", icon: BrainCircuit },
+    { href: "/lab", label: "Lab", sublabel: "AI Playground", icon: Microscope },
     { href: "/harris", label: "Wildlands", sublabel: "Brand", icon: Trees },
   ];
 

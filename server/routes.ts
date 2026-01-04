@@ -87,6 +87,11 @@ async function callOpenRouterAPI(prompt: string, systemPrompt: string): Promise<
 // AI Provider Ladder: Gemini -> OpenRouter -> Off
 async function callAI(prompt: string, lanePrompt: string = ""): Promise<string> {
   const systemPrompt = `${BRUCE_CONTEXT}\n\n${lanePrompt}`.trim();
+  return callAIWithFullPrompt(prompt, systemPrompt);
+}
+
+// AI call with custom system prompt (for Lab personas - bypasses Bruce context)
+async function callAIWithFullPrompt(prompt: string, systemPrompt: string): Promise<string> {
   const provider = getActiveAIProvider();
   
   if (provider === "off") {
@@ -696,6 +701,26 @@ IMPORTANT RULES:
     } catch (err) {
       console.error("Chat failed:", err);
       res.status(500).json({ message: "Chat failed", error: (err as Error).message });
+    }
+  });
+
+  // ==================== LAB (AI PLAYGROUND) ====================
+  
+  // Lab prompt endpoint - sends prompt to AI with custom persona system prompt
+  // Uses callAIWithFullPrompt to bypass Bruce context for pure persona behavior
+  app.post("/api/lab/prompt", isAuthenticated, async (req, res) => {
+    const { prompt, systemPrompt } = req.body;
+    
+    if (!prompt || !systemPrompt) {
+      return res.status(400).json({ message: "Prompt and systemPrompt are required" });
+    }
+    
+    try {
+      const response = await callAIWithFullPrompt(prompt, systemPrompt);
+      res.json({ response, timestamp: new Date().toISOString() });
+    } catch (err) {
+      console.error("Lab prompt failed:", err);
+      res.status(500).json({ message: "Lab prompt failed", error: (err as Error).message });
     }
   });
 
