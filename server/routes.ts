@@ -56,8 +56,17 @@ async function callGemini(prompt: string, systemPrompt: string): Promise<string>
   );
   
   const data = await response.json();
-  if (!response.ok) throw new Error(`Gemini API error: ${JSON.stringify(data)}`);
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  if (!response.ok) {
+    console.error("Gemini API error response:", JSON.stringify(data));
+    throw new Error(`Gemini API error: ${JSON.stringify(data)}`);
+  }
+  
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    console.error("Gemini returned empty response:", JSON.stringify(data));
+    throw new Error("Gemini returned empty response");
+  }
+  return text;
 }
 
 // OpenRouter API call
