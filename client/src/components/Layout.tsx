@@ -56,11 +56,10 @@ export function Layout({ children }: LayoutProps) {
   const { theme, setTheme, overlayEnabled, setOverlayEnabled } = useTheme();
 
   const navItems = [
-    { href: "/", label: "Home", sublabel: "Dashboard", icon: Eye },
+    { href: "/", label: "Bruce\u2122", sublabel: "Dashboard", icon: BrainCircuit },
     { href: "/life", label: "Life", sublabel: "Daily Calibration", icon: Sprout },
     { href: "/goals", label: "Goals", sublabel: "Trunk & Leaves", icon: Target },
     { href: "/think", label: "Think", sublabel: "Ideas & Analysis", icon: CloudSun },
-    { href: "/bruce", label: "Bruce\u2122", sublabel: "AI Hub", icon: BrainCircuit },
     { href: "/lab", label: "Lab", sublabel: "AI Playground", icon: Microscope },
     { href: "/harris", label: "Wildlands", sublabel: "Brand", icon: Trees },
   ];

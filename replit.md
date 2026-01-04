@@ -17,20 +17,20 @@
 
 ## Overview
 
-BruceOps is a modular personal operating system with a simplified 7-tab navigation:
+BruceOps is a modular personal operating system with a streamlined 6-tab navigation:
 
 | Tab | Description | Route |
 |-----|-------------|-------|
-| **Home** | Dashboard overview | `/` |
+| **Bruce™** | Dashboard + AI Hub (Review, Steward, Teaching) | `/` |
 | **Life** | Daily calibration, routines, logs | `/life` |
 | **Goals** | Trunk (core) & Leaves (growth) tracking | `/goals` |
 | **Think** | Ideas, reality-checking, project pipeline | `/think` |
-| **Bruce™** | AI Hub (Review, Steward, Teaching tabs) | `/bruce` |
 | **Lab** | AI Playground with personas & puzzles | `/lab` |
 | **Wildlands** | Brand content generation | `/harris` |
 
 ### Navigation Redesign (Jan 2026)
-- Consolidated AI features into Bruce™ hub page with internal tabs
+- Merged Home dashboard with Bruce™ into unified "Bruce™ Dashboard" as the landing page
+- Bruce™ Dashboard shows: stats cards + quick nav + AI tabs (Review, Steward, Teaching)
 - Added Lab page for experimental AI interactions
 - Renamed: LifeOps→Life, ThinkOps→Think
 - Botanical naming: Core→Trunk, Growth→Leaves

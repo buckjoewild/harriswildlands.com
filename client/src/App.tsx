@@ -6,11 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
-import Dashboard from "@/pages/Dashboard";
+import BruceDashboard from "@/pages/BruceDashboard";
 import LifeOps from "@/pages/LifeOps";
 import Goals from "@/pages/Goals";
 import ThinkOps from "@/pages/ThinkOps";
-import Bruce from "@/pages/Bruce";
 import Lab from "@/pages/Lab";
 import HarrisWildlands from "@/pages/HarrisWildlands";
 import Settings from "@/pages/Settings";
@@ -20,11 +19,10 @@ function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Dashboard} />
+        <Route path="/" component={BruceDashboard} />
         <Route path="/life" component={LifeOps} />
         <Route path="/goals" component={Goals} />
         <Route path="/think" component={ThinkOps} />
-        <Route path="/bruce" component={Bruce} />
         <Route path="/lab" component={Lab} />
         <Route path="/harris" component={HarrisWildlands} />
         <Route path="/settings" component={Settings} />
