@@ -56,15 +56,16 @@ async function callGemini(prompt: string, systemPrompt: string): Promise<string>
   );
   
   const data = await response.json();
+  
+  // Check for quota/rate limit errors first (can appear even with non-OK status)
+  if (data.error?.status === "RESOURCE_EXHAUSTED" || response.status === 429) {
+    console.error("Gemini quota exceeded:", data.error?.message || "Rate limit hit");
+    throw new Error("QUOTA_EXCEEDED: Gemini quota limit reached - please wait a few minutes");
+  }
+  
   if (!response.ok) {
     console.error("Gemini API error response:", JSON.stringify(data));
     throw new Error(`Gemini API error: ${JSON.stringify(data)}`);
-  }
-  
-  // Check for quota/rate limit errors
-  if (data.error?.status === "RESOURCE_EXHAUSTED") {
-    console.error("Gemini quota exceeded:", data.error.message);
-    throw new Error("Gemini quota exceeded - please wait and try again");
   }
   
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -137,7 +138,8 @@ async function callAIWithFullPrompt(prompt: string, systemPrompt: string): Promi
     }
   }
   
-  return "AI temporarily unavailable (quota limit reached). Please try again in a few minutes.";
+  // Return more specific message if it was a quota issue
+  return "AI temporarily unavailable. The daily quota may have been reached - please try again later.";
 }
 
 // Check database connectivity
