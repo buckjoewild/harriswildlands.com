@@ -32,8 +32,8 @@ export default function Settings() {
   
   const createTokenMutation = useMutation({
     mutationFn: async (name: string) => {
-      const response = await apiRequest('/api/settings/tokens', 'POST', { name });
-      return response;
+      const response = await apiRequest('POST', '/api/settings/tokens', { name });
+      return await response.json();
     },
     onSuccess: (data: any) => {
       setNewToken(data.token);
@@ -48,7 +48,7 @@ export default function Settings() {
   
   const revokeTokenMutation = useMutation({
     mutationFn: async (tokenId: number) => {
-      await apiRequest(`/api/settings/tokens/${tokenId}`, 'DELETE');
+      await apiRequest('DELETE', `/api/settings/tokens/${tokenId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings/tokens'] });
