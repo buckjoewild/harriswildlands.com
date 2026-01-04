@@ -220,7 +220,7 @@ function TodayCheckin() {
                   </div>
                   <div>
                     <p className="font-medium">{goal.title}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{goal.domain} • Priority {goal.priority}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{goal.domain} • {goal.priority === 1 ? "Trunk" : "Leaves"}</p>
                   </div>
                 </div>
                 <Button
@@ -389,7 +389,7 @@ function GoalManagement() {
                   />
                 </div>
                 <div>
-                  <Label>Priority</Label>
+                  <Label>Category</Label>
                   <Select 
                     value={String(form.watch("priority"))} 
                     onValueChange={(v) => form.setValue("priority", Number(v), { shouldValidate: true })}
@@ -398,9 +398,8 @@ function GoalManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1 - High</SelectItem>
-                      <SelectItem value="2">2 - Medium</SelectItem>
-                      <SelectItem value="3">3 - Low</SelectItem>
+                      <SelectItem value="1">Trunk (Core)</SelectItem>
+                      <SelectItem value="2">Leaves (Growth)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -440,7 +439,7 @@ function GoalManagement() {
                           <Badge variant="outline" className="text-xs capitalize">{goal.domain}</Badge>
                           <Badge variant="secondary" className="text-xs">{goal.weeklyMinimum}x/week</Badge>
                           <Badge variant={goal.priority === 1 ? "destructive" : "secondary"} className="text-xs">
-                            P{goal.priority}
+                            {goal.priority === 1 ? "Trunk" : "Leaves"}
                           </Badge>
                         </div>
                       </div>
