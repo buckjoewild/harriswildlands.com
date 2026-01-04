@@ -5,6 +5,7 @@ import { db } from "./db";
 import { sql } from "drizzle-orm";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import type { Log, Goal, Checkin } from "@shared/schema";
 import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integrations/auth";
 import rateLimit from 'express-rate-limit';
 import { createHash } from 'crypto';
@@ -1528,6 +1529,223 @@ Be specific with numbers. Only report correlations that appear in at least 5 dat
       message: 'Cache cleared',
       entriesCleared: cleared
     });
+  });
+
+  // ============================================================================
+  // MORNING BRIEFING ENDPOINT (for Zapier/email automation)
+  // ============================================================================
+  
+  app.get("/api/briefing/morning", authenticateDual, async (req, res) => {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      // Get yesterday's date
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      // Get all logs for stats
+      const allLogs = await storage.getLogs(userId);
+      
+      // Get yesterday's log
+      const yesterdayLog = allLogs.find((l: Log) => l.date === yesterdayStr);
+      
+      // Get last 7 days of logs
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const oneWeekAgoStr = oneWeekAgo.toISOString().split('T')[0];
+      const weekLogs = allLogs.filter((l: Log) => l.date >= oneWeekAgoStr && l.date <= yesterdayStr);
+      
+      // Calculate weekly averages
+      const weeklyStats = {
+        avgEnergy: weekLogs.length > 0 
+          ? Math.round((weekLogs.reduce((sum: number, l: Log) => sum + (l.energy || 0), 0) / weekLogs.length) * 10) / 10 
+          : null,
+        avgStress: weekLogs.length > 0 
+          ? Math.round((weekLogs.reduce((sum: number, l: Log) => sum + (l.stress || 0), 0) / weekLogs.length) * 10) / 10 
+          : null,
+        avgMood: weekLogs.length > 0 
+          ? Math.round((weekLogs.reduce((sum: number, l: Log) => sum + (l.mood || 0), 0) / weekLogs.length) * 10) / 10 
+          : null,
+        exerciseDays: weekLogs.filter((l: Log) => l.exercise).length,
+        logsThisWeek: weekLogs.length
+      };
+      
+      // Get active goals
+      const goals = await storage.getGoals(userId);
+      const activeGoals = goals.filter((g: Goal) => g.status === 'active');
+      
+      // Get recent checkins for goal progress
+      const checkins = await storage.getCheckins(userId);
+      const weekCheckins = checkins.filter((c: Checkin) => c.date >= oneWeekAgoStr);
+      
+      // Smart focus selection
+      let focusSuggestion = "Start your day with intention";
+      let focusReason = "";
+      
+      if (yesterdayLog) {
+        if ((yesterdayLog.stress || 0) >= 7) {
+          focusSuggestion = "Recovery & self-care";
+          focusReason = `Yesterday's stress was high (${yesterdayLog.stress}/10). Prioritize restoration.`;
+        } else if ((yesterdayLog.energy || 0) >= 7) {
+          focusSuggestion = "Tackle your biggest challenge";
+          focusReason = `Yesterday's energy was strong (${yesterdayLog.energy}/10). Build on that momentum.`;
+        } else if (yesterdayLog.exercise === false) {
+          focusSuggestion = "Get moving today";
+          focusReason = "No exercise logged yesterday. Even 10 minutes helps.";
+        } else if (yesterdayLog.faithAlignment !== null && yesterdayLog.faithAlignment !== undefined && Number(yesterdayLog.faithAlignment) < 5) {
+          focusSuggestion = "Reconnect with your faith";
+          focusReason = `Faith alignment was low (${yesterdayLog.faithAlignment}/10). Ground yourself today.`;
+        }
+      }
+      
+      // Check for goals needing attention
+      if (activeGoals.length > 0) {
+        const goalsWithoutRecentCheckin = activeGoals.filter((g: Goal) => {
+          const goalCheckins = weekCheckins.filter((c: Checkin) => c.goalId === g.id);
+          return goalCheckins.length === 0;
+        });
+        
+        if (goalsWithoutRecentCheckin.length > 0) {
+          focusSuggestion = `Check in on: ${goalsWithoutRecentCheckin[0].title}`;
+          focusReason = "This goal hasn't had a check-in this week.";
+        }
+      }
+      
+      // Build email-ready content
+      const dateFormatted = today.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      const subject = `BruceOps: Your Morning Briefing - ${dateFormatted}`;
+      
+      // Plain text version
+      const textContent = `
+BRUCEOPS MORNING BRIEFING
+${dateFormatted}
+
+${focusSuggestion}
+${focusReason}
+
+---
+YESTERDAY'S SNAPSHOT${yesterdayLog ? `
+Energy: ${yesterdayLog.energy || 'N/A'}/10
+Stress: ${yesterdayLog.stress || 'N/A'}/10
+Mood: ${yesterdayLog.mood || 'N/A'}/10
+Exercise: ${yesterdayLog.exercise ? 'Yes' : 'No'}
+Top Win: ${yesterdayLog.topWin || 'None logged'}` : `
+No log recorded for yesterday.`}
+
+---
+WEEKLY TRENDS (${weeklyStats.logsThisWeek} days logged)
+Avg Energy: ${weeklyStats.avgEnergy || 'N/A'}/10
+Avg Stress: ${weeklyStats.avgStress || 'N/A'}/10
+Avg Mood: ${weeklyStats.avgMood || 'N/A'}/10
+Exercise Days: ${weeklyStats.exerciseDays}/${weeklyStats.logsThisWeek}
+
+---
+ACTIVE GOALS (${activeGoals.length})
+${activeGoals.slice(0, 3).map((g: Goal) => `- ${g.title} (${g.domain})`).join('\n') || 'No active goals'}
+
+---
+Powered by BruceOps | https://harriswildlands.com
+      `.trim();
+      
+      // HTML version
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 20px; margin: 0; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .header { background: linear-gradient(135deg, #1a3a2a, #0d1f17); padding: 24px; border-radius: 8px; margin-bottom: 20px; }
+    .header h1 { margin: 0 0 8px 0; color: #4ade80; font-size: 24px; }
+    .header .date { color: #9ca3af; font-size: 14px; }
+    .focus-card { background: #1f2937; border-left: 4px solid #4ade80; padding: 16px 20px; border-radius: 0 8px 8px 0; margin-bottom: 20px; }
+    .focus-card h2 { margin: 0 0 8px 0; color: #4ade80; font-size: 18px; }
+    .focus-card p { margin: 0; color: #9ca3af; font-size: 14px; }
+    .section { background: #111827; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px; }
+    .section h3 { margin: 0 0 12px 0; color: #e5e5e5; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+    .metric { display: inline-block; margin-right: 24px; margin-bottom: 8px; }
+    .metric-value { font-size: 24px; font-weight: bold; color: #4ade80; }
+    .metric-label { font-size: 12px; color: #9ca3af; }
+    .goal-item { padding: 8px 0; border-bottom: 1px solid #374151; }
+    .goal-item:last-child { border-bottom: none; }
+    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+    .footer a { color: #4ade80; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>BruceOps Morning Briefing</h1>
+      <div class="date">${dateFormatted}</div>
+    </div>
+    
+    <div class="focus-card">
+      <h2>${focusSuggestion}</h2>
+      <p>${focusReason || 'Make today count.'}</p>
+    </div>
+    
+    <div class="section">
+      <h3>Yesterday's Snapshot</h3>
+      ${yesterdayLog ? `
+      <div class="metric"><div class="metric-value">${yesterdayLog.energy || '-'}</div><div class="metric-label">Energy</div></div>
+      <div class="metric"><div class="metric-value">${yesterdayLog.stress || '-'}</div><div class="metric-label">Stress</div></div>
+      <div class="metric"><div class="metric-value">${yesterdayLog.mood || '-'}</div><div class="metric-label">Mood</div></div>
+      <div class="metric"><div class="metric-value">${yesterdayLog.exercise ? 'Yes' : 'No'}</div><div class="metric-label">Exercise</div></div>
+      ${yesterdayLog.topWin ? `<p style="margin-top: 12px; color: #9ca3af;"><strong>Top Win:</strong> ${yesterdayLog.topWin}</p>` : ''}
+      ` : '<p style="color: #9ca3af;">No log recorded for yesterday.</p>'}
+    </div>
+    
+    <div class="section">
+      <h3>Weekly Trends (${weeklyStats.logsThisWeek} days)</h3>
+      <div class="metric"><div class="metric-value">${weeklyStats.avgEnergy || '-'}</div><div class="metric-label">Avg Energy</div></div>
+      <div class="metric"><div class="metric-value">${weeklyStats.avgStress || '-'}</div><div class="metric-label">Avg Stress</div></div>
+      <div class="metric"><div class="metric-value">${weeklyStats.avgMood || '-'}</div><div class="metric-label">Avg Mood</div></div>
+      <div class="metric"><div class="metric-value">${weeklyStats.exerciseDays}/${weeklyStats.logsThisWeek}</div><div class="metric-label">Exercise Days</div></div>
+    </div>
+    
+    <div class="section">
+      <h3>Active Goals (${activeGoals.length})</h3>
+      ${activeGoals.slice(0, 3).map((g: Goal) => `
+      <div class="goal-item">${g.title} <span style="color: #6b7280;">(${g.domain})</span></div>
+      `).join('') || '<p style="color: #9ca3af;">No active goals set.</p>'}
+    </div>
+    
+    <div class="footer">
+      Powered by <a href="https://harriswildlands.com">BruceOps</a>
+    </div>
+  </div>
+</body>
+</html>
+      `.trim();
+      
+      res.json({
+        subject,
+        text: textContent,
+        html: htmlContent,
+        data: {
+          date: today.toISOString().split('T')[0],
+          yesterdayLog: yesterdayLog || null,
+          weeklyStats,
+          activeGoals: activeGoals.slice(0, 5),
+          focus: { suggestion: focusSuggestion, reason: focusReason }
+        }
+      });
+      
+    } catch (err: any) {
+      console.error('Morning briefing error:', err);
+      res.status(500).json({ error: err.message || 'Failed to generate briefing' });
+    }
   });
 
   return httpServer;
