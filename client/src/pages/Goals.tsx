@@ -159,7 +159,7 @@ function TodayCheckin() {
   const checkInMutation = useMutation({
     mutationFn: async ({ goalId, done, score, note }: { goalId: number; done: boolean; score?: number; note?: string }) => {
       if (isDemo) return { goalId, done, score, note, date: today };
-      return apiRequest("/api/checkins", "POST", { goalId, date: today, done, score, note });
+      return apiRequest("POST", "/api/checkins", { goalId, date: today, done, score, note });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/checkins"] });
@@ -268,7 +268,7 @@ function GoalManagement() {
     mutationFn: async (data: GoalFormValues) => {
       console.log("Create mutation called with:", data);
       if (isDemo) return { ...data, id: Date.now(), userId: "demo", createdAt: new Date() };
-      const result = await apiRequest("/api/goals", "POST", data);
+      const result = await apiRequest("POST", "/api/goals", data);
       console.log("API response:", result);
       return result;
     },
@@ -288,7 +288,7 @@ function GoalManagement() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<Goal> & { id: number }) => {
       if (isDemo) return { ...data, id };
-      return apiRequest(`/api/goals/${id}`, "PUT", data);
+      return apiRequest("PUT", `/api/goals/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
