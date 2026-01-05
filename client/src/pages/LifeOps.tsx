@@ -207,11 +207,12 @@ function MorningLogForm({ date }: { date: string }) {
   }, [existingLog, date]);
 
   const { mutate: saveLog, isPending } = useMutation({
-    mutationFn: async (data: LogFormValues) => {
-      if (isEditMode && existingLog?.id) {
-        return apiRequest("PUT", `/api/logs/${existingLog.id}`, data);
+    mutationFn: async (data: LogFormValues & { _existingId?: number }) => {
+      const { _existingId, ...logData } = data;
+      if (_existingId) {
+        return apiRequest("PUT", `/api/logs/${_existingId}`, logData);
       }
-      return apiRequest("POST", "/api/logs", data);
+      return apiRequest("POST", "/api/logs", logData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
@@ -223,7 +224,8 @@ function MorningLogForm({ date }: { date: string }) {
   });
 
   const onSubmit = (data: LogFormValues) => {
-    saveLog({ ...data, date, logType: "morning" });
+    const logId = existingLogs?.[0]?.id;
+    saveLog({ ...data, date, logType: "morning", _existingId: logId });
   };
 
   if (isLoading) {
@@ -464,11 +466,12 @@ function EveningLogForm({ date }: { date: string }) {
   }, [existingLog, date]);
 
   const { mutate: saveLog, isPending } = useMutation({
-    mutationFn: async (data: LogFormValues) => {
-      if (isEditMode && existingLog?.id) {
-        return apiRequest("PUT", `/api/logs/${existingLog.id}`, data);
+    mutationFn: async (data: LogFormValues & { _existingId?: number }) => {
+      const { _existingId, ...logData } = data;
+      if (_existingId) {
+        return apiRequest("PUT", `/api/logs/${_existingId}`, logData);
       }
-      return apiRequest("POST", "/api/logs", data);
+      return apiRequest("POST", "/api/logs", logData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
@@ -480,7 +483,8 @@ function EveningLogForm({ date }: { date: string }) {
   });
 
   const onSubmit = (data: LogFormValues) => {
-    saveLog({ ...data, date, logType: "evening" });
+    const logId = existingLogs?.[0]?.id;
+    saveLog({ ...data, date, logType: "evening", _existingId: logId });
   };
 
   if (isLoading) {
