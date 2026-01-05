@@ -12,6 +12,7 @@ import Goals from "@/pages/Goals";
 import ThinkOps from "@/pages/ThinkOps";
 import Lab from "@/pages/Lab";
 import HarrisWildlands from "@/pages/HarrisWildlands";
+import SystemMap from "@/pages/SystemMap";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
@@ -25,6 +26,7 @@ function Router() {
         <Route path="/think" component={ThinkOps} />
         <Route path="/lab" component={Lab} />
         <Route path="/harris" component={HarrisWildlands} />
+        <Route path="/system-map" component={SystemMap} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

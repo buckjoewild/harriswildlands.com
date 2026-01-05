@@ -1,0 +1,236 @@
+# REPLIT AGENT TASK: Add System Map Portal to Landing Page
+
+## MISSION
+Add a "System Map" page to HarrisWildlands that serves as a beautiful documentation portal. This is a READ-ONLY static page—no database changes, no new endpoints, just a new React page with the content below.
+
+## WHAT TO BUILD
+
+### 1. Create New Page: `/client/src/pages/SystemMap.tsx`
+
+This page should display a beautiful, dark-themed system documentation portal. Use the existing app's styling patterns (Tailwind, shadcn components if available) but make it feel special—this is the "know what you built" page.
+
+### 2. Add Route in `/client/src/App.tsx`
+
+Add a route for `/system-map` that renders the SystemMap component.
+
+### 3. Add Navigation Link
+
+Add "Map" or "System" to the main navigation (wherever the other nav links live—probably in Layout.tsx or a Nav component).
+
+---
+
+## PAGE CONTENT STRUCTURE
+
+The SystemMap page should have these sections:
+
+### HERO SECTION
+```
+Title: "Know What You Built"
+Subtitle: "A living map of HarrisWildlands—your personal operating system for tracking life, capturing ideas, and building resilience through self-knowledge."
+
+Status Pills (visual indicators):
+- API Online (green dot)
+- Database Connected (green dot)  
+- AI Ready (blue dot)
+- 100 calls/day quota (amber dot)
+```
+
+### SECTION 1: HOW EVERYTHING CONNECTS
+Show this ASCII diagram in a code block or styled container:
+
+```
+                    ┌─────────────────────────────────────────┐
+                    │              YOUR LIFE                   │
+                    └─────────────────────────────────────────┘
+                                      │
+            ┌─────────────────────────┼─────────────────────────┐
+            │                         │                         │
+            ▼                         ▼                         ▼
+    ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
+    │   LifeOps     │       │   ThinkOps    │       │    Goals      │
+    │  Morning Log  │       │ Idea Capture  │       │ Trunk/Leaves  │
+    │  Evening Log  │       │ Reality Check │       │  Check-ins    │
+    └───────┬───────┘       └───────┬───────┘       └───────┬───────┘
+            │                       │                       │
+            └───────────────────────┼───────────────────────┘
+                                    │
+                                    ▼
+                        ┌───────────────────────┐
+                        │     PostgreSQL        │
+                        │    (Your Data)        │
+                        └───────────┬───────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+                    ▼               ▼               ▼
+            ┌───────────┐   ┌───────────┐   ┌───────────┐
+            │  Weekly   │   │ AI Squad  │   │  Export   │
+            │  Review   │   │ Analysis  │   │ JSON/PDF  │
+            └───────────┘   └───────────┘   └───────────┘
+                                │
+                                ▼
+                    ┌───────────────────────┐
+                    │  Gemini / OpenRouter  │
+                    │  (Optional, Cached)   │
+                    │   $0.10/month avg     │
+                    └───────────────────────┘
+```
+
+### SECTION 2: THE THREE LANES
+Cards for each lane:
+
+**LifeOps 🌱**
+- Purpose: Daily logging with morning and evening check-ins
+- Features: Sleep, hydration, energy, stress, habits, drift factors, reflection
+- Key insight: 50+ tracking points, AI-powered weekly synthesis
+
+**ThinkOps 💡**
+- Purpose: Capture ideas without contaminating the daily ledger
+- Features: Quick capture, who it helps, pain it solves, excitement/feasibility scores
+- Key insight: Optional AI "reality check" for validation
+
+**Goals 🎯**
+- Purpose: Track commitments at Trunk (big rocks) and Leaves (weekly) levels
+- Features: Domain-based organization, weekly minimums, progress tracking
+- Key insight: Aggregated in weekly review
+
+### SECTION 3: ENDPOINTS REFERENCE
+A table showing all available endpoints:
+
+| Method | Endpoint | Purpose | AI? |
+|--------|----------|---------|-----|
+| GET | /api/health | Is the system alive? | No |
+| GET | /api/logs | Fetch all daily logs | No |
+| POST | /api/logs | Create a new log | No |
+| GET | /api/logs/:date | Get log for specific date | No |
+| POST | /api/logs/summary | Generate AI summary | ✓ |
+| GET | /api/ideas | Fetch all ideas | No |
+| POST | /api/ideas | Create new idea | No |
+| POST | /api/ideas/:id/reality-check | AI reality check | ✓ |
+| GET | /api/goals | Fetch all goals | No |
+| POST | /api/goals | Create new goal | No |
+| GET | /api/checkins | Fetch all check-ins | No |
+| POST | /api/checkins | Create check-in | No |
+| GET | /api/review/weekly | Weekly review aggregation | No |
+| POST | /api/ai/search | Smart semantic search | ✓ |
+| POST | /api/ai/squad | Multi-perspective analysis | ✓ |
+| POST | /api/ai/correlations | Pattern discovery | ✓ |
+| POST | /api/ai/weekly-synthesis | AI weekly narrative | ✓ |
+| GET | /api/export/data | Download everything as JSON | No |
+| GET | /api/ai/quota | Check AI usage | No |
+
+### SECTION 4: COST PROTECTION
+Show these 4 stats in cards:
+
+- **$0.10** — Average Monthly Cost
+- **100** — Daily Quota (Calls)
+- **24hr** — Cache Duration
+- **10/min** — Rate Limit
+
+### SECTION 5: THE PHILOSOPHY
+4 principle cards:
+
+**01 — Witnessing, Not Measuring**
+You're not optimizing yourself. You're seeing yourself clearly over time. The goal is acceptance and clarity, not perfection.
+
+**02 — Resilience, Not Immunity**
+Self-knowledge doesn't make you bulletproof. It shortens the drift-to-correction cycle. You catch yourself faster.
+
+**03 — Privacy-First, Local-First**
+Your data stays on your machine. No cloud sync. No third-party analytics. AI is optional and you control what it sees.
+
+**04 — Faith, Family, Teaching**
+These are the non-negotiable domains. The system exists to serve them, not to optimize them away.
+
+### SECTION 6: ALTERNATE PATHS (What's Next)
+List of future possibilities with status badges:
+
+**🧪 A/B Testing Yourself** — Status: READY TO BUILD
+Run 7-day experiments on yourself. Get results with honest uncertainty ranges, not fake confidence.
+
+**📜 Sacred Data Export** — Status: READY TO BUILD
+Generate a beautiful year-end PDF that tells your story using your data.
+
+**🌊 Monthly Micro-Synthesis** — Status: PLANNED
+A 2-page monthly reflection bridging daily logs and annual export.
+
+**🔗 Cross-Domain Correlations** — Status: EXPLORING
+Auto-discover hidden patterns across LifeOps, ThinkOps, and Goals.
+
+**🎓 Teaching Assistant** — Status: EXPLORING
+Generate lessons and materials for your classroom.
+
+**🏕️ HarrisWildlands Content Studio** — Status: EXPLORING
+Multi-AI content generation for the family business.
+
+### SECTION 7: QUICK REFERENCE
+Terminal commands in a code block:
+
+```bash
+# Start the server
+cd harriswildlands.com && npm run dev
+
+# Check if it's running
+curl http://localhost:5000/api/health
+
+# Push database changes
+npm run db:push
+
+# Backup your data
+pg_dump > backup_$(date +%Y%m%d).sql
+
+# Export everything
+curl http://localhost:5000/api/export/data > my-data.json
+
+# Check AI quota
+curl http://localhost:5000/api/ai/quota
+```
+
+---
+
+## STYLING GUIDANCE
+
+- Use the app's existing dark theme
+- Make it feel like documentation but beautiful
+- Use monospace fonts for code/endpoints
+- Add subtle animations on scroll if easy
+- Status pills should have pulsing dots
+- Cards should have hover states
+- Make it responsive (works on mobile)
+
+---
+
+## WHAT NOT TO DO
+
+- ❌ Don't create new database tables
+- ❌ Don't create new API endpoints
+- ❌ Don't modify existing pages
+- ❌ Don't add new dependencies unless absolutely necessary
+- ❌ Don't break existing navigation
+
+---
+
+## SUCCESS CRITERIA
+
+- [ ] `/system-map` route loads
+- [ ] Navigation has link to System Map
+- [ ] All sections render correctly
+- [ ] Mobile responsive
+- [ ] No console errors
+- [ ] Doesn't break any existing functionality
+
+---
+
+## TIME ESTIMATE
+
+This should take 15-25 minutes. It's a single static page with no backend changes.
+
+---
+
+## QUOTE TO INCLUDE SOMEWHERE
+
+> "Building resilience through self-knowledge. Not measuring yourself—witnessing yourself."
+
+---
+
+That's it. Ship it! 🚀

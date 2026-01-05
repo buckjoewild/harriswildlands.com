@@ -62,6 +62,7 @@ export function Layout({ children }: LayoutProps) {
     { href: "/think", label: "Think", sublabel: "Ideas & Analysis", icon: CloudSun },
     { href: "/lab", label: "Lab", sublabel: "AI Playground", icon: Microscope },
     { href: "/harris", label: "Wildlands", sublabel: "Brand", icon: Trees },
+    { href: "/system-map", label: "Map", sublabel: "System Docs", icon: Eye },
   ];
 
   const cycleTheme = () => {
