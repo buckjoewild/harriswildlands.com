@@ -362,18 +362,20 @@ export async function registerRoutes(
     res.json({ ...stats, driftFlags });
   });
 
-  // Logs - returns user's logs only (client handles empty state with examples)
+  // Logs - returns user's logs only (supports ?date= and ?logType= filters)
   app.get(api.logs.list.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);
-    const logs = await storage.getLogs(userId);
+    const { date, logType } = req.query as { date?: string; logType?: string };
+    const logs = await storage.getLogs(userId, { date, logType });
     res.json(logs);
   });
 
-  // Get log by date (for duplicate detection)
+  // Get log by date (for duplicate detection, supports ?logType= filter)
   app.get("/api/logs/:date", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
     const { date } = req.params;
-    const log = await storage.getLogByDate(userId, date);
+    const { logType } = req.query as { logType?: string };
+    const log = await storage.getLogByDate(userId, date, logType);
     if (!log) {
       return res.status(404).json({ message: "No log found for this date" });
     }
@@ -399,7 +401,8 @@ export async function registerRoutes(
     try {
       const userId = getUserId(req);
       const id = Number(req.params.id);
-      const input = api.logs.create.input.parse(req.body);
+      // Allow partial updates for PUT
+      const input = api.logs.update.input.parse(req.body);
       const log = await storage.updateLog(userId, id, input);
       if (!log) {
         return res.status(404).json({ message: "Log not found" });

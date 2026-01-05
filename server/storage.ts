@@ -12,10 +12,10 @@ import crypto from "crypto";
 
 export interface IStorage {
   // Logs (user-scoped)
-  getLogs(userId: string): Promise<Log[]>;
+  getLogs(userId: string, filters?: { date?: string; logType?: string }): Promise<Log[]>;
   createLog(userId: string, log: InsertLog): Promise<Log>;
-  getLogByDate(userId: string, date: string): Promise<Log | undefined>;
-  updateLog(userId: string, id: number, updates: InsertLog): Promise<Log | undefined>;
+  getLogByDate(userId: string, date: string, logType?: string): Promise<Log | undefined>;
+  updateLog(userId: string, id: number, updates: Partial<InsertLog>): Promise<Log | undefined>;
   updateLogSummary(userId: string, id: number, summary: string): Promise<Log>;
   
   // Ideas (user-scoped)
@@ -73,9 +73,18 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // -------------------- LOGS (USER-SCOPED) --------------------
   
-  async getLogs(userId: string): Promise<Log[]> {
+  async getLogs(userId: string, filters?: { date?: string; logType?: string }): Promise<Log[]> {
+    const conditions = [eq(logs.userId, userId)];
+    
+    if (filters?.date) {
+      conditions.push(eq(logs.date, filters.date));
+    }
+    if (filters?.logType) {
+      conditions.push(eq(logs.logType, filters.logType));
+    }
+    
     return await db.select().from(logs)
-      .where(eq(logs.userId, userId))
+      .where(and(...conditions))
       .orderBy(desc(logs.date));
   }
 
@@ -84,13 +93,17 @@ export class DatabaseStorage implements IStorage {
     return newLog;
   }
 
-  async getLogByDate(userId: string, date: string): Promise<Log | undefined> {
+  async getLogByDate(userId: string, date: string, logType?: string): Promise<Log | undefined> {
+    const conditions = [eq(logs.userId, userId), eq(logs.date, date)];
+    if (logType) {
+      conditions.push(eq(logs.logType, logType));
+    }
     const [log] = await db.select().from(logs)
-      .where(and(eq(logs.userId, userId), eq(logs.date, date)));
+      .where(and(...conditions));
     return log;
   }
 
-  async updateLog(userId: string, id: number, updates: InsertLog): Promise<Log | undefined> {
+  async updateLog(userId: string, id: number, updates: Partial<InsertLog>): Promise<Log | undefined> {
     const [updated] = await db.update(logs)
       .set(updates)
       .where(and(eq(logs.id, id), eq(logs.userId, userId)))

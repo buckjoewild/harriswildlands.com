@@ -53,6 +53,10 @@ export const api = {
     list: {
       method: 'GET' as const,
       path: '/api/logs',
+      query: z.object({
+        date: z.string().optional(),
+        logType: z.enum(['morning', 'evening']).optional(),
+      }).optional(),
       responses: {
         200: z.array(z.custom<typeof logs.$inferSelect>()),
       },
@@ -60,10 +64,23 @@ export const api = {
     create: {
       method: 'POST' as const,
       path: '/api/logs',
-      input: insertLogSchema,
+      input: insertLogSchema.extend({
+        logType: z.enum(['morning', 'evening']).default('evening'),
+      }),
       responses: {
         201: z.custom<typeof logs.$inferSelect>(),
         400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/logs/:id',
+      input: insertLogSchema.partial().extend({
+        logType: z.enum(['morning', 'evening']).optional(),
+      }),
+      responses: {
+        200: z.custom<typeof logs.$inferSelect>(),
+        404: errorSchemas.notFound,
       },
     },
     generateSummary: {

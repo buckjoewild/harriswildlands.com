@@ -7,13 +7,57 @@ export * from "./models/auth";
 
 // === TABLE DEFINITIONS ===
 
-// Lane 1: LifeOps - Enhanced Daily Calibration
+// Lane 1: LifeOps - Enhanced Daily Calibration with Morning/Evening Split
+export const LOG_TYPES = ["morning", "evening"] as const;
+
 export const logs = pgTable("logs", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
   date: text("date").notNull(), // YYYY-MM-DD
+  logType: text("log_type").default("evening"), // "morning" or "evening"
   
-  // === VICES (Yes/No toggles) ===
+  // === MORNING LOG FIELDS ===
+  // Sleep (morning)
+  sleepHours: integer("sleep_hours"),
+  sleepQuality: integer("sleep_quality"), // 1-10
+  didWakeAtNight: boolean("did_wake_at_night"),
+  
+  // Hydration & Nutrition (morning)
+  hydrationScore: integer("hydration_score"), // 1-10
+  breakfastQuality: text("breakfast_quality"), // none/poor/adequate/excellent
+  coffeeCount: integer("coffee_count"),
+  
+  // Physical state (morning)
+  energy: integer("energy"), // 1-10
+  bodyFeel: text("body_feel"), // sore/tight/neutral/energized
+  soreness: integer("soreness"), // 1-10
+  
+  // Mental state (morning)
+  mentalClarity: integer("mental_clarity"), // 1-10
+  motivation: integer("motivation"), // 1-10
+  anxietyLevel: integer("anxiety_level"), // 1-10
+  
+  // Morning habits
+  exercise: boolean("exercise").default(false),
+  coldShower: boolean("cold_shower").default(false),
+  meditation: boolean("meditation").default(false),
+  journaling: boolean("journaling").default(false),
+  prayer: boolean("prayer").default(false),
+  readingMinutes: integer("reading_minutes"),
+  
+  // Morning intention
+  morningIntention: text("morning_intention"), // "Today I will focus on..."
+  oneThingPriority: text("one_thing_priority"), // Single priority for day
+  
+  // === EVENING LOG FIELDS ===
+  // Daily metrics (evening)
+  stress: integer("stress"), // 1-10
+  mood: integer("mood"), // 1-10
+  focus: integer("focus"), // 1-10
+  connection: integer("connection"), // 1-10 (felt connected to family/people)
+  moneyPressure: integer("money_pressure"), // 1-10
+  
+  // Drift factors (evening)
   vaping: boolean("vaping").default(false),
   alcohol: boolean("alcohol").default(false),
   junkFood: boolean("junk_food").default(false),
@@ -21,38 +65,32 @@ export const logs = pgTable("logs", {
   lateScreens: boolean("late_screens").default(false),
   skippedMeals: boolean("skipped_meals").default(false),
   excessCaffeine: boolean("excess_caffeine").default(false),
-  exercise: boolean("exercise").default(false),
   
-  // === LIFE METRICS (1-10 scales) ===
-  energy: integer("energy"), // 1=crashed, 10=unstoppable
-  stress: integer("stress"), // 1=zen, 10=maxed out
-  mood: integer("mood"), // 1=dark, 10=grateful
-  focus: integer("focus"), // 1=scattered, 10=locked in
-  sleepQuality: integer("sleep_quality"), // 1=terrible, 10=restorative
-  sleepHours: integer("sleep_hours"),
-  moneyPressure: integer("money_pressure"), // 1=stable, 10=crushing
-  connection: integer("connection"), // 1=isolated, 10=deeply connected
+  // Day reflection (evening)
+  dayType: text("day_type"), // work/family/teaching/mixed
+  primaryEmotion: text("primary_emotion"), // joy/stress/contentment/overwhelm
+  winCategory: text("win_category"), // work/family/faith/health/idea
+  timeDrain: text("time_drain"), // What wasted time?
+  topWin: text("top_win"), // Best thing that happened
+  topFriction: text("top_friction"), // Biggest challenge
   
-  // === QUICK CONTEXT (selects) ===
-  dayType: text("day_type"), // work, rest, family, mixed, chaos
-  primaryEmotion: text("primary_emotion"), // grateful, anxious, hopeful, frustrated, peaceful, overwhelmed
-  winCategory: text("win_category"), // family, work, health, faith, creative, none
-  timeDrain: text("time_drain"), // meetings, distractions, emergencies, low-energy, interruptions, none
+  // Values alignment (evening)
+  familyConnection: text("family_connection"), // quality of family time
+  faithAlignment: text("faith_alignment"), // Did day align with faith values?
+  driftCheck: text("drift_check"), // Any drift detected?
   
-  // === REFLECTION PROMPTS ===
-  topWin: text("top_win"),
-  topFriction: text("top_friction"),
-  tomorrowPriority: text("tomorrow_priority"),
+  // Evening reflection
+  tomorrowPriority: text("tomorrow_priority"), // What matters tomorrow?
+  lessonsLearned: text("lessons_learned"), // What did we learn?
+  gratitudeNote: text("gratitude_note"), // What are we grateful for?
   
-  // === OPTIONAL DEEP DIVES ===
-  familyConnection: text("family_connection"),
-  faithAlignment: text("faith_alignment"),
-  driftCheck: text("drift_check"),
-  
-  // === SYSTEM ===
-  rawTranscript: text("raw_transcript"),
-  aiSummary: text("ai_summary"),
+  // Raw input
+  rawTranscript: text("raw_transcript"), // Original voice/text input
+  aiSummary: text("ai_summary"), // AI-generated insight
+
+  // Metadata
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Lane 2: ThinkOps - Enhanced Idea Pipeline
