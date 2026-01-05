@@ -13,7 +13,7 @@
 | **Key Users** | Solo admin (faith-centered father/teacher/creator) |
 | **Privacy** | Private by default, no sharing, user-scoped data |
 | **Theme** | Botanical sci-fi terminal (MS-DOS meets forest intelligence) |
-| **Last Updated** | January 4, 2026 |
+| **Last Updated** | January 5, 2026 |
 
 ## Overview
 
@@ -34,6 +34,14 @@ BruceOps is a modular personal operating system with a streamlined 6-tab navigat
 - Added Lab page for experimental AI interactions
 - Renamed: LifeOps→Life, ThinkOps→Think
 - Botanical naming: Core→Trunk, Growth→Leaves
+
+### LifeOps Morning/Evening Split (Jan 5, 2026)
+Enhanced daily logging with separate morning and evening forms:
+- **Morning Log**: Sleep metrics, energy/clarity/motivation, morning habits (exercise, meditation, prayer, journaling, cold shower), caffeine intake, daily intention
+- **Evening Log**: Stress/mood/focus/connection metrics, drift factors (vaping, alcohol, junk food, doom scrolling, late screens), wins/friction/priorities, gratitude notes
+- Each log type saves independently with `logType` field ("morning" or "evening")
+- Tab indicators show checkmarks when each log is completed for the day
+- API supports `?logType=morning|evening` filter for targeted queries
 
 The application serves as a personalized AI assistant for a faith-centered father/teacher/creator, with strict privacy guardrails and a distinctive "botanical sci-fi" visual design aesthetic.
 
