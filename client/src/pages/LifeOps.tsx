@@ -124,18 +124,17 @@ export default function LifeOps() {
 }
 
 function LogStatusIndicator({ date, logType }: { date: string; logType: LogType }) {
-  const { data: logs } = useQuery<Log[]>({
-    queryKey: ["/api/logs", { date, logType }],
+  const { data: log } = useQuery<Log | null>({
+    queryKey: ["/api/logs", date, logType],
     queryFn: async () => {
-      const res = await fetch(`/api/logs?date=${date}&logType=${logType}`);
+      const res = await fetch(`/api/logs/${date}?logType=${logType}`);
+      if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch logs");
       return res.json();
     },
   });
   
-  const hasLog = logs && logs.length > 0;
-  
-  if (hasLog) {
+  if (log) {
     return <CheckCircle2 className="w-4 h-4 text-emerald-500" data-testid={`status-${logType}-complete`} />;
   }
   return null;
@@ -145,16 +144,16 @@ function MorningLogForm({ date }: { date: string }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
-  const { data: existingLogs, isLoading } = useQuery<Log[]>({
-    queryKey: ["/api/logs", { date, logType: "morning" }],
+  const { data: existingLog, isLoading } = useQuery<Log | null>({
+    queryKey: ["/api/logs", date, "morning"],
     queryFn: async () => {
-      const res = await fetch(`/api/logs?date=${date}&logType=morning`);
+      const res = await fetch(`/api/logs/${date}?logType=morning`);
+      if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch logs");
       return res.json();
     },
   });
   
-  const existingLog = existingLogs?.[0];
   const isEditMode = !!existingLog?.id;
   
   const form = useForm<LogFormValues>({
@@ -224,7 +223,7 @@ function MorningLogForm({ date }: { date: string }) {
   });
 
   const onSubmit = (data: LogFormValues) => {
-    const logId = existingLogs?.[0]?.id;
+    const logId = existingLog?.id;
     saveLog({ ...data, date, logType: "morning", _existingId: logId });
   };
 
@@ -400,16 +399,16 @@ function EveningLogForm({ date }: { date: string }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
-  const { data: existingLogs, isLoading } = useQuery<Log[]>({
-    queryKey: ["/api/logs", { date, logType: "evening" }],
+  const { data: existingLog, isLoading } = useQuery<Log | null>({
+    queryKey: ["/api/logs", date, "evening"],
     queryFn: async () => {
-      const res = await fetch(`/api/logs?date=${date}&logType=evening`);
+      const res = await fetch(`/api/logs/${date}?logType=evening`);
+      if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch logs");
       return res.json();
     },
   });
   
-  const existingLog = existingLogs?.[0];
   const isEditMode = !!existingLog?.id;
   
   const form = useForm<LogFormValues>({
@@ -483,7 +482,7 @@ function EveningLogForm({ date }: { date: string }) {
   });
 
   const onSubmit = (data: LogFormValues) => {
-    const logId = existingLogs?.[0]?.id;
+    const logId = existingLog?.id;
     saveLog({ ...data, date, logType: "evening", _existingId: logId });
   };
 
