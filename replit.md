@@ -35,13 +35,33 @@ BruceOps is a modular personal operating system with a streamlined 6-tab navigat
 - Renamed: LifeOps→Life, ThinkOps→Think
 - Botanical naming: Core→Trunk, Growth→Leaves
 
-### LifeOps Morning/Evening Split (Jan 5, 2026)
-Enhanced daily logging with separate morning and evening forms:
-- **Morning Log**: Sleep metrics, energy/clarity/motivation, morning habits (exercise, meditation, prayer, journaling, cold shower), caffeine intake, daily intention
-- **Evening Log**: Stress/mood/focus/connection metrics, drift factors (vaping, alcohol, junk food, doom scrolling, late screens), wins/friction/priorities, gratitude notes
-- Each log type saves independently with `logType` field ("morning" or "evening")
-- Tab indicators show checkmarks when each log is completed for the day
-- API supports `?logType=morning|evening` filter for targeted queries
+### LifeOps v2 - Science-Integrated Logging (Jan 8, 2026)
+Complete rewrite based on contingency management and CBT principles:
+
+**Morning Log (4 sections):**
+1. **Reward Contract** - Plan today's reward upfront (contingency management)
+2. **Sleep & Circadian Law** - Sleep hours, bedtime window held, high-risk badge trigger
+3. **Body Regulation** - Movement, digestion, supplements taken
+4. **Motivational Alignment** - Intention selection from predefined list
+
+**Evening Log (7 sections):**
+1. **Core Outcome** - Followed Plan today? YES/NO (primary binary)
+2. **Contingency Management** - Reward claimed, clean claim, scripts used count
+3. **Script Execution** - What script worked, what needs adjustment
+4. **Body Regulation** - Evening state tracking
+5. **Mind & Urge Signal** - Urge intensity, primary trigger badge selection
+6. **Environment Integrity** - Environment leaks toggle with leak type badges (phone, snack access, door unlocked, other)
+7. **Recovery Rule** (conditional) - Only visible when followedPlan=NO: systemResumed, nextBlockScript, frictionUpgrade
+
+**Weekly Dashboard (6 metrics):**
+- YES Days ratio (X/7)
+- Current streak (consecutive YES days)
+- Rewards Claimed rate (%)
+- Sleep Adherence rate (%)
+- Environment Leak count
+- Scripts Used total
+
+**High Risk Tomorrow Badge**: Appears when sleepHours < 6.5 OR bedtimeWindowHeld === false
 
 The application serves as a personalized AI assistant for a faith-centered father/teacher/creator, with strict privacy guardrails and a distinctive "botanical sci-fi" visual design aesthetic.
 
