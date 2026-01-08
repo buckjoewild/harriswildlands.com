@@ -431,6 +431,62 @@ export async function registerRoutes(
     res.json({ summary: updated.aiSummary });
   });
 
+  // Weekly stats for LifeOps dashboard
+  app.get("/api/logs/stats/weekly", authenticateDual, async (req, res) => {
+    const userId = getUserId(req);
+    
+    // Get logs from the last 7 days
+    const today = new Date();
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 7);
+    
+    const logs = await storage.getLogs(userId, {});
+    
+    // Filter to last 7 days
+    const recentLogs = logs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= weekAgo && logDate <= today;
+    });
+    
+    const eveningLogs = recentLogs.filter(l => l.logType === "evening");
+    const morningLogs = recentLogs.filter(l => l.logType === "morning");
+    
+    // Calculate metrics
+    const yesDays = eveningLogs.filter(l => l.followedPlan === true).length;
+    const rewardClaimedCount = eveningLogs.filter(l => l.rewardClaimed === true).length;
+    const rewardClaimedRate = eveningLogs.length > 0 ? Math.round((rewardClaimedCount / eveningLogs.length) * 100) : 0;
+    
+    const sleepAdherenceCount = morningLogs.filter(l => l.bedtimeWindowHeld === true).length;
+    const sleepAdherenceRate = morningLogs.length > 0 ? Math.round((sleepAdherenceCount / morningLogs.length) * 100) : 0;
+    
+    const environmentLeakCount = eveningLogs.filter(l => l.environmentLeaks === true).length;
+    
+    const scriptsUsedTotal = eveningLogs.reduce((sum, l) => sum + (l.scriptsUsed || 0), 0);
+    
+    // Calculate streak (consecutive days with followedPlan = true, going backwards from today)
+    let streak = 0;
+    const sortedEveningLogs = [...eveningLogs].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    for (const log of sortedEveningLogs) {
+      if (log.followedPlan) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    res.json({
+      yesDays,
+      totalDays: eveningLogs.length,
+      rewardClaimedRate,
+      sleepAdherenceRate,
+      environmentLeakCount,
+      scriptsUsedTotal,
+      streak,
+    });
+  });
+
   // Ideas
   app.get(api.ideas.list.path, authenticateDual, async (req, res) => {
     const userId = getUserId(req);

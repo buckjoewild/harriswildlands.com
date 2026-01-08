@@ -1,0 +1,287 @@
+🔥 Got it — 5 minutes because it’s richer, not because we slow-walk it. And yes: we’ll embed the addiction/habit-change science directly into the LifeOps daily log so the log runs the system, not just records it. ⚙️🌲
+
+Below is the updated LifeOps Daily Log v2 (built to take ~5 minutes, max signal, low narrative). This is what you add to harriswildlands.com.
+
+
+---
+
+LifeOps Daily Log v2 (5-minute, science-integrated) 🎛️✅
+
+0) The One Question (Core Outcome)
+
+Followed the plan today? (Yes / No)
+
+> This stays the “truth checkbox.” Everything else explains why.
+
+
+
+
+---
+
+1) Contingency Management (PRIMARY ENGINE) 🏆
+
+These are the levers that make change stick.
+
+Reward Earned? (Yes/No)
+
+Reward Claimed Same-Day? (Yes/No)
+
+What reward did I earn? (dropdown: Project Time / Chill Time / Hobby / Other)
+
+Points Earned Today (number)
+
+Suggested: 0–10 points, where “Followed plan = 10”
+
+
+Streak (auto-calc; display only)
+
+
+Design note for the site: show a tiny “Reward Contract” box at top:
+
+> “If I follow the plan today, I earn: ____.”
+
+
+
+
+---
+
+2) Script Execution (CBT Minimal) 🔧
+
+This is behavioral, not emotional.
+
+Triggers encountered (checkboxes: Red / Yellow / Green)
+
+Scripts used (0–5)
+
+Did I run a script when triggered? (Yes/No)
+
+Most-used script today (dropdown)
+
+If No: “What was the gap?” (dropdown: Forgot / Too tired / Too fast / Alone / Environment leak)
+
+
+Optional 1-liner:
+
+“Next time, my script is: _________” (max 120 chars)
+
+
+
+---
+
+3) Sleep & Circadian Law (Infrastructure) 🌙
+
+This is mandatory because it controls impulse and cravings.
+
+Wake time held? (Yes/No)
+
+Bedtime window held? (Yes/No)
+
+Sleep duration (hours)
+
+Sleep quality (slider 0–10)
+
+Screens docked outside bedroom? (Yes/No)
+
+
+Auto-flag on the page:
+
+If sleep < 6.5 hours OR bedtime window missed → “High Risk Tomorrow” badge
+
+
+
+---
+
+4) Body Regulation (Nutrition + OTC Support) 🥗💧
+
+Not “biohacking.” Just stabilizing the nervous system.
+
+Protein-forward first meal? (Yes/No)
+
+Hydration before noon? (Yes/No)
+
+Caffeine cutoff held? (Yes/No) (set cutoff time in settings)
+
+Movement (None / Light / Moderate / Hard)
+
+OTC plan taken as intended (Yes/No)
+
+Hunger stability (slider 0–10)
+
+
+
+---
+
+5) Mind & Urge Signal (Fast, honest) 🧠⚡
+
+We track the state, not a story.
+
+Urge intensity (peak) (0–10)
+
+Stress load (0–10)
+
+Impulse control (0–10)
+
+Focus/clarity (0–10)
+
+Anxiety/rumination (0–10)
+
+
+Automatic interpretation (display):
+
+High urge + low sleep = “Fix sleep & friction first”
+
+High stress + low impulse control = “Run scripts + reduce choices”
+
+
+
+---
+
+6) Motivational Alignment (ANCHOR) 🧭✝️
+
+This is your “why” check — quick but real.
+
+Sliders (0–10):
+
+Time in Word / prayer
+
+Peace / steadiness
+
+Integrity alignment
+
+Service / love expressed
+
+
+One forced-choice prompt (MI style):
+
+Which value did I protect today? (dropdown: Faith / Family / Integrity / Health / Service / Leadership)
+
+
+Optional 1 sentence:
+
+“Today I chose ______ over ______.”
+
+
+
+---
+
+7) Environment Integrity (Phase 2 enforcement) 🧱
+
+This is where we prevent “neutral environment = vice wins.”
+
+Environment protected (no low-friction access)? (Yes/No)
+
+Any environment leaks? (Yes/No) If Yes:
+
+Leak type (checkboxes): Bedroom / Car / Phone / Store route / Alone-time / Money access
+
+“Fix applied immediately?” (Yes/No)
+
+
+
+---
+
+8) Recovery Rule (only shows if “Followed plan = No”) 🛡️
+
+When you mark No, the log becomes a containment tool, not a shame tool.
+
+System resumed within next block? (Yes/No)
+
+What is the next block script? (dropdown)
+
+One friction upgrade I will apply now: (dropdown)
+
+
+
+---
+
+UI/Build Notes for harriswildlands.com (so it feels 🔥)
+
+Make it fast
+
+Sliders default at 5, quick tap
+
+Yes/No as big toggle buttons
+
+Most fields optional except the “Core Outcome” + “Sleep” + “Reward”
+
+
+Make it intelligent
+
+Auto-highlight the one most important fix each day:
+
+Sleep missed → fix sleep
+
+Reward missed → fix reinforcement
+
+Environment leak → patch leak
+
+Script not used → simplify scripts
+
+
+
+Make it rewarding
+
+When “Followed plan = Yes” → show a “Claim Reward” animation + streak
+
+
+
+---
+
+How to proceed (tonight) 🚀
+
+Spec → Build → Verify → Ship
+
+Spec
+
+Implement this as Daily Log v2 and keep your old log as “v1 archived.”
+
+
+Build
+
+Add sections in this exact order (top-down: outcome → reward → scripts → sleep → body → mind → spiritual → environment).
+
+
+Verify
+
+Confirm: entry saves + loads + weekly summary counts:
+
+YES days
+
+reward claimed rate
+
+sleep adherence rate
+
+environment leak count
+
+scripts used total
+
+
+
+Ship
+
+Link it from LifeOps homepage with a big button: “Run Today’s Log (5 min)”
+
+
+
+---
+
+3 next actions (≤ 30 min) ⏱️
+
+1. Add CM block (reward earned/claimed + points) to the log UI.
+
+
+2. Add Script Execution block (scripts used + gap reason) to the log UI.
+
+
+3. Add conditional Recovery Rule section that only appears when “Followed plan = No”.
+
+
+
+Definition of Done ✅
+
+You can complete a log entry with: Outcome + Reward + Scripts + Sleep, it saves, and the app shows a weekly dashboard with the 5 counts above.
+
+
+---
+
+If you paste (or describe) your current tech stack for harriswildlands.com (Next.js? Express? plain HTML?), I’ll give you drop-in component structure + data schema tailored to it. ⚙️🌲

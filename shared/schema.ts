@@ -88,6 +88,60 @@ export const logs = pgTable("logs", {
   rawTranscript: text("raw_transcript"), // Original voice/text input
   aiSummary: text("ai_summary"), // AI-generated insight
 
+  // === LIFEOPS V2 FIELDS ===
+  
+  // Morning v2: Reward Contract & Anchor
+  rewardContract: text("reward_contract"), // "If I follow the plan, I earn..."
+  wakeTimeHeld: boolean("wake_time_held"),
+  bedtimeWindowHeld: boolean("bedtime_window_held"),
+  screensDocked: boolean("screens_docked"), // Screens outside bedroom
+  proteinForwardMeal: boolean("protein_forward_meal"),
+  hydrationBeforeNoon: boolean("hydration_before_noon"),
+  timeInWord: integer("time_in_word"), // 0-10 slider
+  peaceLevel: integer("peace_level"), // 0-10
+  integrityAlignment: integer("integrity_alignment"), // 0-10
+  serviceExpressed: integer("service_expressed"), // 0-10
+  valueProtected: text("value_protected"), // Faith/Family/Integrity/Health/Service/Leadership
+  
+  // Evening v2: Core Outcome & Contingency Management
+  followedPlan: boolean("followed_plan"), // THE core question
+  rewardEarned: boolean("reward_earned"),
+  rewardClaimed: boolean("reward_claimed"),
+  rewardType: text("reward_type"), // Project Time/Chill Time/Hobby/Other
+  pointsEarned: integer("points_earned"), // 0-10
+  
+  // Evening v2: Script Execution (CBT)
+  triggersEncountered: text("triggers_encountered").array(), // Red/Yellow/Green
+  scriptsUsed: integer("scripts_used"), // 0-5
+  scriptRunWhenTriggered: boolean("script_run_when_triggered"),
+  mostUsedScript: text("most_used_script"),
+  scriptGap: text("script_gap"), // Forgot/Too tired/Too fast/Alone/Environment leak
+  
+  // Evening v2: Body Regulation
+  caffeineCutoffHeld: boolean("caffeine_cutoff_held"),
+  movementLevel: text("movement_level"), // None/Light/Moderate/Hard
+  otcPlanTaken: boolean("otc_plan_taken"),
+  hungerStability: integer("hunger_stability"), // 0-10
+  
+  // Evening v2: Mind & Urge Signal
+  urgeIntensity: integer("urge_intensity"), // 0-10 peak
+  impulseControl: integer("impulse_control"), // 0-10
+  anxietyRumination: integer("anxiety_rumination"), // 0-10
+  
+  // Evening v2: Values choice
+  valueChoice: text("value_choice"), // "Today I chose X over Y"
+  
+  // Evening v2: Environment Integrity
+  environmentProtected: boolean("environment_protected"),
+  environmentLeaks: boolean("environment_leaks"),
+  leakTypes: text("leak_types").array(), // Bedroom/Car/Phone/Store route/Alone-time/Money access
+  leakFixedImmediately: boolean("leak_fixed_immediately"),
+  
+  // Evening v2: Recovery Rule (only when followedPlan = No)
+  systemResumed: boolean("system_resumed"),
+  nextBlockScript: text("next_block_script"),
+  frictionUpgrade: text("friction_upgrade"),
+
   // Metadata
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -395,3 +449,12 @@ export const IDEA_CATEGORIES = ["tech", "business", "creative", "family", "faith
 export const TIME_ESTIMATES = ["hours", "days", "weeks", "months"] as const;
 export const CONTENT_TYPES = ["website", "social", "email", "blog", "video"] as const;
 export const CONTENT_TONES = ["inspirational", "educational", "personal", "professional"] as const;
+
+// === LIFEOPS V2 CONSTANTS ===
+export const REWARD_TYPES = ["Project Time", "Chill Time", "Hobby", "Other"] as const;
+export const TRIGGER_LEVELS = ["Red", "Yellow", "Green"] as const;
+export const SCRIPT_GAPS = ["Forgot", "Too tired", "Too fast", "Alone", "Environment leak"] as const;
+export const MOVEMENT_LEVELS = ["None", "Light", "Moderate", "Hard"] as const;
+export const VALUES_PROTECTED = ["Faith", "Family", "Integrity", "Health", "Service", "Leadership"] as const;
+export const LEAK_TYPES = ["Bedroom", "Car", "Phone", "Store route", "Alone-time", "Money access"] as const;
+export const FRICTION_UPGRADES = ["Add friction to trigger", "Remove item access", "Change environment", "Add accountability", "Simplify scripts"] as const;
