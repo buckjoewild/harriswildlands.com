@@ -383,9 +383,13 @@ function MorningLogForm({ date }: { date: string }) {
     saveLog({ ...data, date, logType: "morning", _existingId: logId });
   };
 
-  const sleepHours = form.watch("sleepHours") || 7;
-  const bedtimeHeld = form.watch("bedtimeWindowHeld");
-  const isHighRisk = sleepHours < 6.5 || !bedtimeHeld;
+  const watchedSleepHours = form.watch("sleepHours");
+  const watchedBedtimeHeld = form.watch("bedtimeWindowHeld");
+  
+  // Use form values if available, otherwise fallback to loaded data
+  const sleepHours = watchedSleepHours ?? existingLog?.sleepHours ?? 7;
+  const bedtimeHeld = watchedBedtimeHeld ?? existingLog?.bedtimeWindowHeld ?? true;
+  const isHighRisk = sleepHours < 6.5 || bedtimeHeld === false;
 
   if (isLoading) {
     return (
