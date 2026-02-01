@@ -8,12 +8,12 @@
 | **Production URL** | https://harriswildlands.com |
 | **GitHub Repo** | https://github.com/buckjoewild/harriswildlands.com |
 | **Hosting** | Replit Autoscale (with Docker portability) |
-| **Auth** | Replit OIDC + PostgreSQL sessions |
+| **Auth** | Public-first access + Optional Replit OIDC for private mode |
 | **Database** | PostgreSQL with Drizzle ORM (Neon-backed) |
-| **Key Users** | Solo admin (faith-centered father/teacher/creator) |
-| **Privacy** | Private by default, no sharing, user-scoped data |
+| **Key Users** | Public visitors + Solo admin (faith-centered father/teacher/creator) |
+| **Privacy** | Public by default (shared data), optional login for private data |
 | **Theme** | Botanical sci-fi terminal (MS-DOS meets forest intelligence) |
-| **Last Updated** | January 5, 2026 |
+| **Last Updated** | February 1, 2026 |
 
 ## Overview
 
@@ -27,6 +27,14 @@ BruceOps is a modular personal operating system with a streamlined 6-tab navigat
 | **Think** | Ideas, reality-checking, project pipeline | `/think` |
 | **Lab** | AI Playground with personas & puzzles | `/lab` |
 | **Wildlands** | Brand content generation | `/harris` |
+
+### Public-First Access (Feb 2026)
+The app now operates with public-first access:
+- **No login required** - Anyone can access and use all features immediately
+- **Shared public data** - Uses PUBLIC_USER_ID='public' for unauthenticated visitors
+- **Optional private mode** - Click "Login for Private Mode" for personal data isolation
+- **Rate limiting** - 100 req/15min general, 10 req/min AI per user protects against abuse
+- **Auth flags**: `isPublic=true` for public mode, `isAuthenticated=true` only for logged-in private accounts
 
 ### Navigation Redesign (Jan 2026)
 - Merged Home dashboard with Bruce™ into unified "Bruce™ Dashboard" as the landing page
