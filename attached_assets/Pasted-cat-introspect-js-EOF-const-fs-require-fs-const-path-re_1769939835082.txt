@@ -1,0 +1,51 @@
+cat > introspect.js << 'EOF'
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+const manifest = {
+  meta: { timestamp: new Date().toISOString(), replit_owner: process.env.REPLIT_OWNER || 'unknown', replit_slug: process.env.REPLIT_SLUG || 'unknown' },
+  project: {},
+  tech_stack: {},
+  git: {},
+  environment: {},
+  files: {},
+  deployment: {},
+};
+
+try {
+  const pkgPath = path.join(process.cwd(), 'package.json');
+  if (fs.existsSync(pkgPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    manifest.project = { name: pkg.name, version: pkg.version, scripts: pkg.scripts || {}, dependencies: Object.keys(pkg.dependencies || {}), devDependencies: Object.keys(pkg.devDependencies || {}) };
+  }
+} catch (e) {}
+
+try {
+  const gitRemote = execSync('git config --get remote.origin.url 2>/dev/null || echo "none"').toString().trim();
+  const gitBranch = execSync('git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "none"').toString().trim();
+  const gitSha = execSync('git rev-parse HEAD 2>/dev/null || echo "none"').toString().trim();
+  manifest.git = { remote_url: gitRemote !== 'none' ? gitRemote : null, current_branch: gitBranch !== 'none' ? gitBranch : null, current_sha: gitSha !== 'none' ? gitSha.substring(0, 8) : null };
+} catch (e) {}
+
+try {
+  manifest.environment = { env_vars: Object.keys(process.env).filter(k => !k.startsWith('npm_')).slice(0, 20), sensitive_vars: Object.keys(process.env).filter(k => /key|secret|password|token|api|db_url/i.test(k)) };
+} catch (e) {}
+
+try {
+  const cwd = process.cwd();
+  const files = ['package.json', 'package-lock.json', 'Dockerfile', '.replit', '.github/workflows', 'vercel.json', 'netlify.toml', 'Procfile'];
+  manifest.files.found = files.filter(f => fs.existsSync(path.join(cwd, f)));
+} catch (e) {}
+
+try {
+  if (fs.existsSync(path.join(process.cwd(), 'package.json'))) {
+    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+    manifest.deployment = { build_script: pkg.scripts?.build, start_script: pkg.scripts?.start, dev_script: pkg.scripts?.dev, port: process.env.PORT || '3000' };
+  }
+} catch (e) {}
+
+console.log(JSON.stringify(manifest, null, 2));
+fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));
+EOF
+node introspect.js

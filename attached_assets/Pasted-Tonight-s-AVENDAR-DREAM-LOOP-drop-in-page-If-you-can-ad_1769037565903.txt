@@ -1,0 +1,247 @@
+Tonight’s “AVENDAR DREAM LOOP” (drop-in page) 🧩
+
+If you can add one HTML file to your site (or a Replit static deploy), this is enough to feel like a MUD.
+
+1) Create a file: avendar-dream-loop.html
+
+Paste this whole thing:
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AVENDAR DREAM LOOP</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin:0; background:#0b0d12; color:#d7dbe7; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 24px; }
+    .card { background:#0f1420; border:1px solid #232c43; border-radius:14px; padding:18px; box-shadow: 0 8px 30px rgba(0,0,0,.35); }
+    .title { white-space:pre; line-height:1.15; margin:0 0 12px 0; }
+    #term { height: 62vh; overflow:auto; padding: 14px; border-radius: 12px; background:#070910; border:1px solid #20273a; }
+    .row { display:flex; gap:10px; margin-top: 12px; }
+    input { flex:1; padding: 12px 12px; border-radius: 10px; border:1px solid #2b3550; background:#0b1020; color:#e7ebf5; outline:none; }
+    button { padding: 12px 14px; border-radius: 10px; border:1px solid #2b3550; background:#121a2e; color:#e7ebf5; cursor:pointer; }
+    .hint { opacity:.8; font-size: 12px; margin-top:10px; }
+    .mono { white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+<pre class="title">            ░░░░░░░░░░░░░░░░░░░
+         ░░░  AVENDAR DREAM LOOP  ░░░
+            ░░░░░░░░░░░░░░░░░░░</pre>
+
+      <div id="term" class="mono" aria-label="terminal"></div>
+
+      <div class="row">
+        <input id="cmd" placeholder="type: look / north / east / down / again / say hello / help" autocomplete="off" />
+        <button id="send">Enter</button>
+      </div>
+      <div class="hint">Tip: type <b>help</b>. This is a safe local “MUD-feel” demo (no network). 🔒</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const term = document.getElementById("term");
+  const cmd = document.getElementById("cmd");
+  const send = document.getElementById("send");
+
+  const state = {
+    room: "glyph_field",
+    loop: 0,
+    drift: 0,
+    flags: { seen_formula: false }
+  };
+
+  const rooms = {
+    glyph_field: {
+      title: "Glyph-Field Edge",
+      base: [
+        "You stand at the edge of a glyph-field.",
+        "Every step writes you back into the world.",
+        "",
+        "Exits: [north] [east] [down] [again]"
+      ]
+    },
+    north: {
+      title: "Wind Function",
+      base: [
+        "The wind is a function you can almost read.",
+        "It compiles and un-compiles your footprints.",
+        "",
+        "Exits: [south] [again]"
+      ]
+    },
+    east: {
+      title: "ASCII Grassline",
+      base: [
+        "The grass is ASCII.",
+        "You can feel characters bending under weight.",
+        "",
+        "Exits: [west] [again]"
+      ]
+    },
+    down: {
+      title: "Root Cache",
+      base: [
+        "Below the glyph-field: a root-cache of old commands.",
+        "Some were typed by you. Some by something else.",
+        "",
+        "Exits: [up] [again]"
+      ]
+    }
+  };
+
+  function print(lines="") {
+    if (Array.isArray(lines)) lines = lines.join("\n");
+    term.textContent += lines + "\n";
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function roomText() {
+    const r = rooms[state.room] || rooms.glyph_field;
+    const driftNoise = state.drift > 0
+      ? [
+          "",
+          "The room remembers you.",
+          "But *slightly incorrectly*.",
+          "",
+          "A small error blooms into pattern."
+        ]
+      : [];
+
+    const fractal = state.flags.seen_formula
+      ? [
+          "",
+          "Z = Z² + C",
+          "░▒▓█▓▒░  ░▒▓█▓▒░  ░▒▓█▓▒░"
+        ]
+      : [];
+
+    const loopBadge = [
+      "",
+      `Loop: ${state.loop}   Drift: ${state.drift}`
+    ];
+
+    return [`== ${r.title} ==`, ...r.base, ...driftNoise, ...fractal, ...loopBadge];
+  }
+
+  function normalize(s){ return (s||"").trim().toLowerCase(); }
+
+  function act(raw) {
+    const s = normalize(raw);
+    if (!s) return;
+
+    print(`> ${raw}`);
+
+    if (s === "help") {
+      print([
+        "Commands:",
+        "  look | l",
+        "  north | n, east | e, down | d (and south/west/up depending where you are)",
+        "  again  (the loop lever) 🌀",
+        "  say <msg>",
+        "",
+        "Goal: explore, trigger the formula, then ride the loop."
+      ]);
+      return;
+    }
+
+    if (s === "look" || s === "l") {
+      print(roomText());
+      return;
+    }
+
+    if (s.startsWith("say ")) {
+      const msg = raw.slice(raw.toLowerCase().indexOf("say ")+4);
+      print([`You say: "${msg}"`, "The glyphs echo it back… differently."]);
+      state.drift = Math.min(9, state.drift + 1);
+      return;
+    }
+
+    if (s === "again") {
+      state.loop++;
+      state.drift = Math.min(9, state.drift + 1);
+
+      if (state.loop >= 2) state.flags.seen_formula = true;
+
+      // subtle “misremembering” effect:
+      if (state.drift % 3 === 0) {
+        print([
+          "You step on the same line of reality.",
+          "It edits itself to accommodate you.",
+          "",
+          "░░░░░  REWRITE CONFIRMED  ░░░░░"
+        ]);
+      } else {
+        print([
+          "You take the loop lever.",
+          "The world yields one degree."
+        ]);
+      }
+      print(roomText());
+      return;
+    }
+
+    // movement (minimal)
+    const move = (to) => { state.room = to; print(roomText()); };
+
+    if (["north","n"].includes(s)) return move("north");
+    if (["east","e"].includes(s)) return move("east");
+    if (["down","d"].includes(s)) return move("down");
+    if (["south","s"].includes(s)) return move("glyph_field");
+    if (["west","w"].includes(s)) return move("glyph_field");
+    if (["up","u"].includes(s)) return move("glyph_field");
+
+    print("Unknown command. Type: help");
+  }
+
+  function boot() {
+    print(roomText());
+    cmd.focus();
+  }
+
+  send.addEventListener("click", () => { act(cmd.value); cmd.value=""; cmd.focus(); });
+  cmd.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { act(cmd.value); cmd.value=""; }
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
+
+2) Put it on harriswildlands.com
+
+If your site is static: drop it in your public folder and link it like /avendar-dream-loop.html
+
+If it’s a React/Vite site: put it in /public/ and link to it from the homepage
+
+Your hotkey problem (Shift+W) 🧠⚙️
+
+Two quick fixes:
+
+Change the hotkey from Shift+W to something that doesn’t block capitalization (e.g., Ctrl+Alt+W or F9)
+
+Or toggle Caps Lock when you need that capital W without Shift 😄
+
+80/20 Plan (Tonight) 🍽️➡️🕹️
+
+✅ Ship the Dream Loop page (above) to harriswildlands.com
+
+✅ Link it from homepage: “AVENDAR DREAM LOOP (LIVE)”
+
+✅ Do a family walkthrough: look → east → say … → again → again
+
+✅ Record 30 seconds of screen capture for “proof of life”
+
+🔜 Next: add a real MUD connector service (bot client) behind a toggle
+
+SBVS: Spec—“Dream Loop web demo” | Build—add 1 HTML page | Verify—commands + loop work | Ship—link on site
+Reality: Known—demo is safe/instant | Likely—family loves the vibe | Risk—live telnet integration derails tonight
+Next (≤30m): 1) Paste file 2) Add homepage link 3) Run the script: again twice
+DoD: You can type again and see drift + Z = Z² + C appear 🌀
