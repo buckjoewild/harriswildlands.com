@@ -52,7 +52,7 @@ const themeConfig: Record<ThemeMode, { label: string; icon: any; color: string }
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const { user, isLoading, isAuthenticated, logout } = useAuth();
+  const { user, isLoading, isAuthenticated, isPublic, logout, login } = useAuth();
   const { theme, setTheme, overlayEnabled, setOverlayEnabled } = useTheme();
 
   const navItems = [
@@ -109,87 +109,6 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
           <p className="text-muted-foreground text-sm tracking-widest uppercase">Initializing...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen relative overflow-hidden bg-black">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50"
-          style={{ backgroundImage: `url(${CoreImagery.bruceopsNew})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/85" />
-        
-        {/* Energy Lines Overlay */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {/* Horizontal energy lines */}
-          <div className="absolute top-[20%] left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent energy-line-h" />
-          <div className="absolute top-[40%] left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent energy-line-h" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-[70%] left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent energy-line-h" style={{ animationDelay: '2s' }} />
-          
-          {/* Vertical energy lines */}
-          <div className="absolute left-[15%] top-0 h-full w-px bg-gradient-to-b from-transparent via-emerald-500/30 to-transparent energy-line-v" />
-          <div className="absolute left-[85%] top-0 h-full w-px bg-gradient-to-b from-transparent via-cyan-500/25 to-transparent energy-line-v" style={{ animationDelay: '1.5s' }} />
-          
-          {/* Corner symbols */}
-          <div className="absolute top-8 right-8 text-cyan-500/30 font-mono text-xs">
-            <div className="flex flex-col items-end gap-1">
-              <span>[SYS.ACTIVE]</span>
-              <span className="text-emerald-500/40">NODE.READY</span>
-            </div>
-          </div>
-          <div className="absolute bottom-8 left-8 text-emerald-500/25 font-mono text-[10px]">
-            <div className="flex flex-col gap-1">
-              <span>// BOTANICAL_NET</span>
-              <span className="text-cyan-500/30">// v2.0.GROWTH</span>
-            </div>
-          </div>
-          
-          {/* Floating circuit symbols */}
-          <div className="absolute top-[30%] left-[10%] w-3 h-3 border border-cyan-500/20 rounded-full animate-pulse" />
-          <div className="absolute top-[60%] right-[20%] w-2 h-2 bg-emerald-500/30 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
-          <div className="absolute bottom-[25%] left-[25%] w-4 h-4 border border-emerald-500/15 rotate-45" />
-          <div className="absolute top-[15%] right-[30%] text-cyan-500/20 font-mono text-lg">+</div>
-          <div className="absolute bottom-[40%] right-[10%] text-emerald-500/15 font-mono text-lg">*</div>
-        </div>
-        
-        <div className="relative min-h-screen flex flex-col p-6 z-10">
-          <div className="bg-black/80 border border-emerald-500/40 p-4 backdrop-blur-md max-w-md">
-            <p className="font-mono text-emerald-400/80 text-xs mb-1 tracking-wider">C:\WILDLANDS&gt;</p>
-            <h1 className="font-mono font-normal text-2xl md:text-3xl tracking-tight text-emerald-300 uppercase">
-              HARRIS_WILDLANDS<span className="cursor-blink">_</span>
-            </h1>
-            <p className="font-mono text-emerald-400/70 text-xs mt-2 tracking-wide">
-              &gt; faith over fear &amp; systems over skills
-            </p>
-          </div>
-          
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <button 
-              className="portal-button group relative px-8 py-4 font-mono text-lg tracking-wider uppercase"
-              onClick={() => window.location.href = "/api/login"}
-              data-testid="button-login"
-            >
-              <span className="portal-button-bg" />
-              <span className="portal-button-glow" />
-              <span className="relative z-10 flex items-center gap-3 text-emerald-100">
-                <Trees className="w-5 h-5" />
-                ENTER_THE_WILDLANDS
-              </span>
-            </button>
-            <p className="font-mono text-[10px] text-emerald-400/40 mt-4 tracking-widest">
-              &gt; AUTHENTICATE TO CONTINUE
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <p className="font-mono text-[10px] text-emerald-200/50 tracking-widest uppercase">
-              PRIVATE BY DEFAULT // NO SHARING // BOTANICAL INTELLIGENCE
-            </p>
-          </div>
         </div>
       </div>
     );
@@ -253,33 +172,48 @@ export function Layout({ children }: LayoutProps) {
           <NavLink href="/settings" label="System Config" icon={Settings} />
         </div>
 
-        {/* User Profile */}
+        {/* User Profile / Login */}
         <div className="pt-4 mt-4 border-t border-border/30">
-          <div className="flex items-center gap-3 px-2">
-            <Avatar className="w-8 h-8 border border-primary/20">
-              <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || 'User'} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                {user?.firstName?.[0] || user?.email?.[0] || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate" data-testid="text-username">
-                {user?.firstName || 'Operator'}
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate tracking-wide">
-                ACTIVE SESSION
-              </p>
-            </div>
+          {isPublic ? (
             <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => logout()}
-              className="shrink-0"
-              data-testid="button-logout"
+              variant="outline" 
+              className="w-full justify-start gap-3"
+              onClick={login}
+              data-testid="button-login"
             >
-              <LogOut className="w-4 h-4" />
+              <User className="w-4 h-4" />
+              <div className="flex flex-col items-start">
+                <span className="text-sm">Login for Private Mode</span>
+                <span className="text-[10px] text-muted-foreground">Currently in Public Mode</span>
+              </div>
             </Button>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3 px-2">
+              <Avatar className="w-8 h-8 border border-primary/20">
+                <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || 'User'} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  {user?.firstName?.[0] || user?.email?.[0] || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" data-testid="text-username">
+                  {user?.firstName || 'Operator'}
+                </p>
+                <p className="text-[10px] text-muted-foreground truncate tracking-wide">
+                  PRIVATE SESSION
+                </p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => logout()}
+                className="shrink-0"
+                data-testid="button-logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -336,14 +270,25 @@ export function Layout({ children }: LayoutProps) {
               <NavLink href="/settings" label="System Config" icon={Settings} />
             </div>
             <div className="pt-4 mt-4 border-t border-border/30">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start text-muted-foreground"
-                onClick={() => logout()}
-              >
-                <LogOut className="w-4 h-4 mr-3" />
-                Sign out
-              </Button>
+              {isPublic ? (
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={login}
+                >
+                  <User className="w-4 h-4 mr-3" />
+                  Login for Private Mode
+                </Button>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-muted-foreground"
+                  onClick={() => logout()}
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Sign out
+                </Button>
+              )}
             </div>
           </nav>
         </div>

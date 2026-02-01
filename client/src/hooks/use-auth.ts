@@ -1,55 +1,61 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@shared/models/auth";
 
-function isDemoMode(): boolean {
-  if (typeof window === "undefined") return false;
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get("demo") === "true" || localStorage.getItem("demo-mode") === "true";
+// Extended user type to include public mode info
+interface AuthUser extends User {
+  isPublic?: boolean;
+  displayName?: string;
 }
 
-const demoUser: User = {
-  id: "demo-user",
-  email: "demo@harriswildlands.com",
-  firstName: "Demo",
-  lastName: "Visitor",
+// Public user for unauthenticated visitors
+const publicUser: AuthUser = {
+  id: "public",
+  email: "public@harriswildlands.com",
+  firstName: "Public",
+  lastName: "User",
   profileImageUrl: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  isPublic: true,
+  displayName: "Public User",
 };
 
-async function fetchUser(): Promise<User | null> {
-  if (isDemoMode()) {
-    localStorage.setItem("demo-mode", "true");
-    return demoUser;
-  }
-
-  const response = await fetch("/api/auth/user", {
+async function fetchUser(): Promise<AuthUser> {
+  // First try to get the current user from /api/me
+  const meResponse = await fetch("/api/me", {
     credentials: "include",
   });
 
-  if (response.status === 401) {
-    return null;
-  }
+  if (meResponse.ok) {
+    const meData = await meResponse.json();
+    
+    // If user is public, return public user with data from API
+    if (meData.isPublic) {
+      return { ...publicUser, ...meData };
+    }
+    
+    // Otherwise, get full user details
+    const userResponse = await fetch("/api/auth/user", {
+      credentials: "include",
+    });
 
-  if (!response.ok) {
-    throw new Error(`${response.status}: ${response.statusText}`);
+    if (userResponse.ok) {
+      const userData = await userResponse.json();
+      return { ...userData, isPublic: false };
+    }
   }
-
-  return response.json();
+  
+  // Fallback to public user
+  return publicUser;
 }
 
 async function logout(): Promise<void> {
-  if (isDemoMode()) {
-    localStorage.removeItem("demo-mode");
-    window.location.href = "/";
-    return;
-  }
   window.location.href = "/api/logout";
 }
 
 export function useAuth() {
   const queryClient = useQueryClient();
-  const { data: user, isLoading } = useQuery<User | null>({
+  const { data: user, isLoading } = useQuery<AuthUser>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false,
@@ -59,18 +65,26 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.setQueryData(["/api/auth/user"], publicUser);
     },
   });
+
+  const isPublic = user?.isPublic === true;
+  // isAuthenticated means user is logged in with their own account (not public mode)
+  const isAuthenticated = !!user && !isPublic;
 
   return {
     user,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated,
+    isPublic,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
-    isDemo: isDemoMode(),
+    login: () => window.location.href = "/api/login",
   };
 }
 
-export { isDemoMode };
+// Compatibility function - returns false since demo mode is replaced by public mode
+export function isDemoMode(): boolean {
+  return false;
+}
