@@ -266,9 +266,12 @@ export async function registerRoutes(
     next();
   }
 
-  // Dual-auth middleware (accepts EITHER session OR token)
+  // Public user ID for unauthenticated access
+  const PUBLIC_USER_ID = 'public';
+
+  // Dual-auth middleware (accepts session, token, OR public access)
   async function authenticateDual(req: Request, res: Response, next: NextFunction) {
-    // Check for session first (web UI)
+    // Check for session first (web UI - logged in user)
     if ((req as any).isAuthenticated && (req as any).isAuthenticated()) {
       return next();
     }
@@ -279,16 +282,25 @@ export async function registerRoutes(
       return authenticateToken(req, res, next);
     }
     
-    // No valid auth found
-    return res.status(401).json({ error: 'Authentication required' });
+    // Allow public access with shared "public" user
+    (req as any).userId = PUBLIC_USER_ID;
+    (req as any).user = { claims: { sub: PUBLIC_USER_ID }, isPublic: true };
+    return next();
   }
 
-  console.log('✅ Dual-auth middleware enabled (session + token)');
+  console.log('✅ Public-first auth enabled (anyone can access, login optional)');
 
   // /api/me endpoint for frontend to get current user info
-  app.get("/api/me", isAuthenticated, async (req, res) => {
+  // Works for both authenticated and public users
+  app.get("/api/me", authenticateDual, async (req, res) => {
     const userId = getUserId(req);
-    res.json({ id: userId, claims: (req.user as any)?.claims });
+    const isPublic = (req.user as any)?.isPublic === true;
+    res.json({ 
+      id: userId, 
+      claims: (req.user as any)?.claims,
+      isPublic,
+      displayName: isPublic ? 'Public User' : (req.user as any)?.claims?.name || 'User'
+    });
   });
 
   // ==================== API TOKEN MANAGEMENT (Session auth only) ====================
